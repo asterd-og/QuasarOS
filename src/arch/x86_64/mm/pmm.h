@@ -12,3 +12,4 @@
 void  PMM_Init();
 void* PMM_Alloc(u64 pages);
 void  PMM_Free(void* address, u64 pages);
+u64   PMM_GetFreeMemory();

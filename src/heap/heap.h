@@ -1,0 +1,17 @@
+#pragma once
+
+#include <types.h>
+#include <arch/x86_64/mm/pmm.h>
+
+#define Heap_Magic 0xdeadfacade
+
+struct Heap_MemoryBlockHDR {
+    u64 magic;
+    u64 size;
+};
+
+typedef struct Heap_MemoryBlockHDR Heap_MemoryBlockHDR;
+
+int   Heap_Init(uptr startAddr);
+void* Heap_Alloc(u64 size);
+void  Heap_Free(void* ptr);

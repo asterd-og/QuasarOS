@@ -4,6 +4,7 @@ u8* PMM_Bitmap;
 u64 PMM_BitmapSize;
 u64 PMM_BitmapIndex;
 u64 PMM_Pages;
+u64 PMM_FreeMemory;
 
 static volatile struct limine_memmap_request mmapReq = {
     .id = LIMINE_MEMMAP_REQUEST,
@@ -29,6 +30,7 @@ void PMM_Init() {
         }
     }
 
+    PMM_FreeMemory = higherAddr;
     PMM_Pages = higherAddr / pageSize;
     PMM_BitmapSize = alignUp(PMM_Pages / 8, pageSize);
 
@@ -86,4 +88,8 @@ void PMM_Free(void* address, u64 pages) {
 
     PMM_BitmapIndex = pageIndex;
     return;
+}
+
+u64 PMM_GetFreeMemory() {
+    return PMM_FreeMemory;
 }

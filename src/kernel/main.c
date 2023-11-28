@@ -10,6 +10,7 @@
 #include <flanterm/flanterm.h>
 #include <kernel/kernel.h>
 #include <libc/printf.h>
+#include <heap/heap.h>
 
 volatile struct limine_framebuffer_request fbReq = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
@@ -68,6 +69,8 @@ void _start(void) {
     VMM_Init();
 
     printf("VMM Loaded.\n");
+
+    Heap_Init((uptr)toHigherHalf(PMM_Alloc(1)));
 
     while (1) {
     }
