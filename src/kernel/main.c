@@ -5,11 +5,13 @@
 #include <arch/x86_64/cpu/serial.h>
 #include <flanterm/backends/fb.h>
 #include <arch/x86_64/cpu/pic.h>
+#include <arch/x86_64/cpu/pit.h>
 #include <arch/x86_64/mm/pmm.h>
 #include <arch/x86_64/mm/vmm.h>
 #include <flanterm/flanterm.h>
 #include <kernel/kernel.h>
 #include <libc/printf.h>
+#include <sched/sched.h>
 #include <heap/heap.h>
 
 volatile struct limine_framebuffer_request fbReq = {
@@ -34,6 +36,14 @@ static volatile struct limine_module_request modReq = {
 
 struct limine_file* findModule(int pos) {
     return modReq.response->modules[pos];
+}
+
+void Task1() {
+    while(1) printf("Hello from task 1\n");
+}
+
+void Task2() {
+    while(1) printf("Hello from task 2\n");
 }
 
 void _start(void) {
@@ -71,6 +81,11 @@ void _start(void) {
     printf("VMM Loaded.\n");
 
     Heap_Init((uptr)toHigherHalf(PMM_Alloc(1)));
+
+    Sched_CreateNewTask(Task1);
+    Sched_CreateNewTask(Task2);
+
+    PIT_Init();
 
     while (1) {
     }
