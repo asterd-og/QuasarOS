@@ -7,8 +7,6 @@ static IDT_Entry IDT_Entries[256];
 static IDTR     IDT_Data;
 extern void*    IDT_IntTable[];
 
-bool IRQ_Enabled = true;
-
 void*  IDT_Handlers[16] = {0};
 
 static const char* IDT_Msgs[32] = {
@@ -91,20 +89,8 @@ void IRQ_Handler(Registers* pRegs) {
     void(*HandlerFunc)(Registers*) = IDT_Handlers[pRegs->intNo - 32];
 
     if ((u64)IDT_Handlers[pRegs->intNo - 32] != 0) {
-        if (IRQ_Enabled) {
             HandlerFunc(pRegs);
-        }
     }
     
     PIC_Eoi(pRegs->intNo - 32);
-}
-
-void CLI() {
-    asm volatile("cli");
-    IRQ_Enabled = false;
-}
-
-void STI() {
-    IRQ_Enabled = true;
-    asm volatile("sti");
 }

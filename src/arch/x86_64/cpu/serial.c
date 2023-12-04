@@ -2,9 +2,7 @@
 #include <arch/x86_64/io.h>
 #include <libc/string.h>
 #include <libc/printf.h>
-#include <libc/lock.h>
-
-Locker Serial_Lock;
+#include <sched/sched.h>
 
 int Serial_Init() {
     outb(COM1 + 1, 0);
@@ -50,10 +48,10 @@ void Serial_Wrap(char c, void* extra) {
 }
 
 void Serial_Printf(char* pStr, ...) {
-    Lock(&Serial_Lock);
+    Sched_Lock();
     va_list args;
     va_start(args, pStr);
     vfctprintf(Serial_Wrap, NULL, pStr, args);
     va_end(args);
-    Unlock(&Serial_Lock);
+    Sched_Unlock();
 }
