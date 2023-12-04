@@ -10,14 +10,13 @@
 #include <arch/x86_64/mm/vmm.h>
 #include <flanterm/flanterm.h>
 #include <kernel/kernel.h>
+#include <drivers/mouse.h>
 #include <libc/printf.h>
 #include <sched/sched.h>
+#include <drivers/kb.h>
+#include <video/vbe.h>
 #include <heap/heap.h>
-
-volatile struct limine_framebuffer_request fbReq = {
-    .id = LIMINE_FRAMEBUFFER_REQUEST,
-    .revision = 0
-};
+#include <video/fb.h>
 
 volatile struct limine_hhdm_request hhdmReq = {
     .id = LIMINE_HHDM_REQUEST,
@@ -25,7 +24,6 @@ volatile struct limine_hhdm_request hhdmReq = {
 };
 
 struct flanterm_context *Flanterm_Context;
-struct limine_framebuffer_response* Framebuffer_Data;
 
 u64 HHDM_Offset;
 
@@ -38,58 +36,72 @@ struct limine_file* findModule(int pos) {
     return modReq.response->modules[pos];
 }
 
-void Task1() {
-    while(1) printf("Hello from task 1\n");
+Framebuffer* Flanterm_FB;
+
+void IdleTask() {
+    while(1) {
+        asm volatile("hlt");
+    }
 }
 
-void Task2() {
-    while(1) printf("Hello from task 2\n");
+void VBE_Task() {
+    while(1) {
+        FB_SetPix(VBE, Mouse_X, Mouse_Y, 0xFF000000);
+        FB_SetPix(VBE, Mouse_X+1, Mouse_Y, 0xFF000000);
+        FB_SetPix(VBE, Mouse_X+1, Mouse_Y+1, 0xFF000000);
+        FB_SetPix(VBE, Mouse_X, Mouse_Y+1, 0xFF000000);
+        VBE_Update();
+    }
 }
 
 void _start(void) {
     HHDM_Offset = hhdmReq.response->offset;
-    Framebuffer_Data = fbReq.response;
-    
-    if (fbReq.response == NULL
-     || fbReq.response->framebuffer_count < 1) {
-        for (;;) asm("hlt");
-    }
 
     GDT_Init();
     Serial_Init();
 
-    Flanterm_Context = flanterm_fb_simple_init(
-        Framebuffer_Data->framebuffers[0]->address,
-        Framebuffer_Data->framebuffers[0]->width,
-        Framebuffer_Data->framebuffers[0]->height,
-        Framebuffer_Data->framebuffers[0]->pitch
-    );
-
-    asm volatile("cli");
+    asm ("cli");
 
     IDT_Init();
     PIC_Remap();
 
-    asm volatile("sti");
+    asm ("sti");
 
     PMM_Init();
 
-    printf("Loading VMM...\n");
+    Serial_Printf("Loading VMM.\n");
 
     VMM_Init();
 
-    printf("VMM Loaded.\n");
+    Serial_Printf("VMM Loaded.\n");
 
     Heap_Init((uptr)toHigherHalf(PMM_Alloc(1)));
 
-    Sched_CreateNewTask(Task1);
-    Sched_CreateNewTask(Task2);
+    VBE_Init();
+    Mouse_Init();
+
+    Flanterm_FB = FB_CreateNewFB(
+        200, 200, 500, 500, VBE->pitch
+    );
+
+    Flanterm_Context = flanterm_fb_simple_init(
+        Flanterm_FB->buffer,
+        Flanterm_FB->width, Flanterm_FB->height,
+        VBE->pitch
+    );
+
+    printf("Hey!\n");
+    FB_Clear(VBE, 0xFFFF00FF);
+    FB_CopyFB(Flanterm_FB, VBE);
+
+    Sched_CreateNewTask(VBE_Task);
 
     PIT_Init();
 
-    while (1) {
-    }
+    for (;;);
 }
+
+Locker PutCh_Lock;
 
 void putchar_(char c) {
     char msg[] = {c, '\0'};

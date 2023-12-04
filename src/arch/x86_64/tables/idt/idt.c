@@ -60,7 +60,7 @@ void IDT_Init() {
     }
 
     IDT_Data = (IDTR){
-        .size   = (u16)sizeof(IDT_Entry) * 256 - 1,
+        .size   = (u16)sizeof(IDT_Entry) * 48 - 1,
         .offset = (u64)IDT_Entries
     };
 
@@ -71,7 +71,13 @@ void IRQ_Register(u8 vec, void* pHandler) {
     IDT_Handlers[vec] = pHandler;
 }
 
+void IRQ_Unregister(u8 vec) {
+    IDT_Handlers[vec] = 0;
+}
+
 void ISR_Handler(Registers* pRegs) {
+    IRQ_Unregister(0); // Disable tasking
+    
     asm volatile("cli");
 
     Serial_Printf("\nUh oh!\nSomething went wrong: %s\n", IDT_Msgs[pRegs->intNo]);

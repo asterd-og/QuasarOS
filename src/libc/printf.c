@@ -44,7 +44,6 @@
 #endif
 
 #include <libc/printf.h>
-#include <libc/lock.h>
 
 #ifdef __cplusplus
 #include <cstdint>
