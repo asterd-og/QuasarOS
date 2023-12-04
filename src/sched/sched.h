@@ -12,4 +12,7 @@ typedef struct {
 } Sched_Task;
 
 Sched_Task* Sched_CreateNewTask(void* addr);
-void Sched_SwitchTask(Registers* regs);
+void Sched_Schedule(Registers* regs);
+
+void Sched_Lock();
+void Sched_Unlock();

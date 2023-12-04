@@ -1387,16 +1387,14 @@ int vfctprintf(void (*out)(char c, void* extra_arg), void* extra_arg, const char
   return vsnprintf_impl(&gadget, format, arg);
 }
 
-Locker Print_Lock;
-
 int printf(const char* format, ...)
 {
-  Lock(&Print_Lock);
+  Sched_Lock();
   va_list args;
   va_start(args, format);
   const int ret = vprintf(format, args);
   va_end(args);
-  Unlock(&Print_Lock);
+  Sched_Unlock();
   return ret;
 }
 

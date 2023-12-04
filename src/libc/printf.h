@@ -39,7 +39,7 @@
 #ifndef PRINTF_H_
 #define PRINTF_H_
 
-#include <libc/lock.h>
+#include <sched/sched.h>
 
 #ifdef __cplusplus
 # include <cstdarg>

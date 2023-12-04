@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "mouse.h": "c",
-        "vbe.h": "c"
+        "vbe.h": "c",
+        "limine.h": "c",
+        "sched.h": "c",
+        "idt.h": "c"
     }
 }

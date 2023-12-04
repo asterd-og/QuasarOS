@@ -1,17 +1,18 @@
 #include <sched/sched.h>
-#include <libc/printf.h>
-#include <libc/lock.h>
 #include <arch/x86_64/cpu/serial.h>
+#include <libc/lock.h>
 
 Sched_Task* Sched_TaskList[Sched_MaxTaskLimit] = {};
+Sched_Task* Sched_CurrentTask = NULL;
 u64 Sched_TID = 0;
 u64 Sched_CTID = 0;
-u64 stage = 0;
+u64 Sched_Stage = 0;
+u64 Sched_LockCounter = 0;
 
-Locker Sched_Lock;
+static Locker Sched_AtomicLock;
 
 Sched_Task* Sched_CreateNewTask(void* addr) {
-    Lock(&Sched_Lock);
+    Sched_Lock();
 
     Sched_Task* task = (Sched_Task*)Heap_Alloc(sizeof(Sched_Task));
     task->TID = Sched_TID;
@@ -33,50 +34,30 @@ Sched_Task* Sched_CreateNewTask(void* addr) {
 
     Sched_TID++;
 
-    Unlock(&Sched_Lock);
+    Sched_Unlock();
 
     return task;
 }
 
-void Sched_CopyContext(Registers* from, Registers* to) {
-    to->r15 = from->r15;
-    to->r14 = from->r14;
-    to->r13 = from->r13;
-    to->r12 = from->r12;
-    to->r11 = from->r11;
-    to->r10 = from->r10;
-    to->r9 = from->r9;
-    to->r8 = from->r8;
-    to->rdi = from->rdi;
-    to->rsi = from->rsi;
-    to->rbp = from->rbp;
-    to->rbx = from->rbx;
-    to->rdx = from->rdx;
-    to->rcx = from->rcx;
-    to->rax = from->rax;
-    to->rflags = from->rflags;
-    to->rsp = from->rsp;
-    to->rip = from->rip;
-}
-
-void Sched_SwitchTask(Registers* regs) {
-    Lock(&Sched_Lock);
-    
-    if (stage == 0) {
-        Sched_Task* task = Sched_TaskList[Sched_CTID];
-        memcpy(regs, &task->regs, sizeof(Registers));
-
-        stage = 1;
-    } else {
-        Sched_Task* task = Sched_TaskList[Sched_CTID];
-        memcpy(&task->regs, regs, sizeof(Registers));
-
+void Sched_Schedule(Registers* regs) {
+    if (Sched_CurrentTask != NULL) {
+        memcpy(&Sched_CurrentTask->regs, regs, sizeof(Registers));
+        Sched_CurrentTask = Sched_TaskList[Sched_CTID];
+        memcpy(regs, &Sched_CurrentTask->regs, sizeof(Registers));
         Sched_CTID++;
         if (Sched_CTID == Sched_TID) {
             Sched_CTID = 0;
         }
-        stage = 0;
+    } else {
+        Sched_CurrentTask = Sched_TaskList[Sched_CTID];
+        memcpy(regs, &Sched_CurrentTask->regs, sizeof(Registers));
     }
+}
 
-    Unlock(&Sched_Lock);
+void Sched_Lock() {
+    Lock(&Sched_AtomicLock);
+}
+
+void Sched_Unlock() {
+    Unlock(&Sched_AtomicLock);
 }

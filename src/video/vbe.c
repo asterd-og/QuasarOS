@@ -24,3 +24,7 @@ void VBE_Update() {
         FB_Addr[i] = VBE->buffer[i];
     Unlock(&VBE_Lock);
 }
+
+u32* VBE_GetAddr() {
+    return FB_Addr;
+}

@@ -38,19 +38,15 @@ struct limine_file* findModule(int pos) {
 
 Framebuffer* Flanterm_FB;
 
-void IdleTask() {
+void Task1() {
     while(1) {
-        asm volatile("hlt");
+        printf("a");
     }
 }
 
-void VBE_Task() {
+void Task2() {
     while(1) {
-        FB_SetPix(VBE, Mouse_X, Mouse_Y, 0xFF000000);
-        FB_SetPix(VBE, Mouse_X+1, Mouse_Y, 0xFF000000);
-        FB_SetPix(VBE, Mouse_X+1, Mouse_Y+1, 0xFF000000);
-        FB_SetPix(VBE, Mouse_X, Mouse_Y+1, 0xFF000000);
-        VBE_Update();
+        printf("b");
     }
 }
 
@@ -78,30 +74,24 @@ void _start(void) {
     Heap_Init((uptr)toHigherHalf(PMM_Alloc(1)));
 
     VBE_Init();
-    Mouse_Init();
 
     Flanterm_FB = FB_CreateNewFB(
         200, 200, 500, 500, VBE->pitch
     );
 
     Flanterm_Context = flanterm_fb_simple_init(
-        Flanterm_FB->buffer,
-        Flanterm_FB->width, Flanterm_FB->height,
+        VBE_GetAddr(),
+        VBE->width, VBE->height,
         VBE->pitch
     );
 
-    printf("Hey!\n");
-    FB_Clear(VBE, 0xFFFF00FF);
-    FB_CopyFB(Flanterm_FB, VBE);
-
-    Sched_CreateNewTask(VBE_Task);
+    Sched_CreateNewTask(Task1);
+    Sched_CreateNewTask(Task2);
 
     PIT_Init();
 
     for (;;);
 }
-
-Locker PutCh_Lock;
 
 void putchar_(char c) {
     char msg[] = {c, '\0'};
