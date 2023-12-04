@@ -40,13 +40,13 @@ Framebuffer* Flanterm_FB;
 
 void Task1() {
     while(1) {
-        printf("a");
+        printf("Task1\n");
     }
 }
 
 void Task2() {
     while(1) {
-        printf("b");
+        printf("Task2\n");
     }
 }
 

@@ -10,10 +10,8 @@ void PIT_Sleep(u64 ms) {
 }
 
 void PIT_Handler(Registers* regs) {
-    (void)regs;
     PIT_Tick++;
     Sched_Tick++;
-    Serial_Printf(".");
     if (Sched_Tick == 10 * (PIT_BaseFreq / 100)) {
         Sched_Schedule(regs);
         Sched_Tick = 0;
