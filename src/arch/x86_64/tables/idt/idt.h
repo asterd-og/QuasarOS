@@ -47,5 +47,6 @@ typedef struct {
 void IDT_Init();
 void IRQ_Register(u8 vec, void* pHandler);
 void IRQ_Unregister(u8 vec);
+void IRQ_RegisterSyscall(void* handler);
 void CLI();
 void STI();

@@ -26,7 +26,7 @@ override DEFAULT_HOST_LIBS :=
 $(eval $(call DEFAULT_VAR,HOST_LIBS,$(DEFAULT_HOST_LIBS)))
 
 .PHONY: all
-all: $(IMAGE_NAME).iso run clean
+all: $(IMAGE_NAME).iso kvmRun clean
 
 .PHONY: all-hdd
 all-hdd: $(IMAGE_NAME).hdd
@@ -34,6 +34,10 @@ all-hdd: $(IMAGE_NAME).hdd
 .PHONY: run
 run: $(IMAGE_NAME).iso
 	qemu-system-x86_64 -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio
+
+.PHONY: kvmRun
+kvmRun: $(IMAGE_NAME).iso
+	qemu-system-x86_64 -accel kvm -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio
 
 .PHONY: run-uefi
 run-uefi: ovmf $(IMAGE_NAME).iso
@@ -63,12 +67,13 @@ limine:
 .PHONY: kernel
 kernel:
 	$(MAKE) -C src
+	$(MAKE) -C exec
 
 $(IMAGE_NAME).iso: limine kernel
 	rm -rf iso_root
 	mkdir -p iso_root
 	cp -v src/kernel.elf\
-		limine.cfg limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/
+		limine.cfg exec/bin limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/
 	mkdir -p iso_root/EFI/BOOT
 	cp -v limine/BOOTX64.EFI iso_root/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI iso_root/EFI/BOOT/

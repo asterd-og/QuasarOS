@@ -4,6 +4,14 @@
         "vbe.h": "c",
         "limine.h": "c",
         "sched.h": "c",
-        "idt.h": "c"
+        "idt.h": "c",
+        "kernel.h": "c",
+        "printf.h": "c",
+        "serial.h": "c",
+        "pmm.h": "c",
+        "types.h": "c",
+        "stdbool.h": "c",
+        "stdint.h": "c",
+        "gdt.h": "c"
     }
 }

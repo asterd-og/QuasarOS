@@ -1,16 +1,17 @@
 #include <drivers/kb.h>
 #include <libc/lock.h>
 #include <arch/x86_64/cpu/serial.h>
+#include <sched/sched.h>
 
 bool KB_KeyPressed = false;
 char KB_CurrentChar = '\0';
 bool KB_Caps = false;
 bool KB_Shift = false;
 
-Locker KB_Lock;
+void KB_Handler(Registers* regs) {
+    Sched_Lock();
+    (void)regs;
 
-void KB_Handler(void) {
-    Lock(&KB_Lock);
     u8 key = inb(0x60);
 
     if (!(key & 0x80)) {
@@ -40,18 +41,19 @@ void KB_Handler(void) {
                 break;
         }
     }
-    Unlock(&KB_Lock);
+
+    Sched_Unlock();
 }
 
 
 char KB_GetChar() {
-    Lock(&KB_Lock);
+    Sched_Lock();
     if (KB_KeyPressed) {
         KB_KeyPressed = false;
-        Unlock(&KB_Lock);
+        Sched_Unlock();
         return KB_CurrentChar;
     } else {
-        Unlock(&KB_Lock);
+        Sched_Unlock();
         return '\0';
     }
 }

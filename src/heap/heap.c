@@ -45,3 +45,7 @@ void Heap_Free(void* ptr) {
     block->magic = 0;
     block->size = 0;
 }
+
+void* Heap_PAlloc(u64 size) {
+    return PMM_Alloc((size > pageSize) ? divRoundUp(size / pageSize, pageSize) : 1);
+}

@@ -7,7 +7,7 @@ static IDT_Entry IDT_Entries[256];
 static IDTR     IDT_Data;
 extern void*    IDT_IntTable[];
 
-void*  IDT_Handlers[16] = {0};
+void*  IDT_Handlers[17] = {0};
 
 static const char* IDT_Msgs[32] = {
     "Division by zero",
@@ -55,12 +55,12 @@ void IDT_SetDesc(u8 vec, void* pIsr) {
 }
 
 void IDT_Init() {
-    for (u8 vec = 0; vec < 48; vec++) {
+    for (u8 vec = 0; vec < 49; vec++) {
         IDT_SetDesc(vec, IDT_IntTable[vec]);
     }
 
     IDT_Data = (IDTR){
-        .size   = (u16)sizeof(IDT_Entry) * 48 - 1,
+        .size   = (u16)sizeof(IDT_Entry) * 49 - 1,
         .offset = (u64)IDT_Entries
     };
 
@@ -86,7 +86,9 @@ void ISR_Handler(Registers* pRegs) {
 }
 
 void IRQ_Handler(Registers* pRegs) {
-    void(*HandlerFunc)(Registers*) = IDT_Handlers[pRegs->intNo - 32];
+    void(*HandlerFunc)(Registers*);
+
+    HandlerFunc = IDT_Handlers[pRegs->intNo - 32];
 
     if ((u64)IDT_Handlers[pRegs->intNo - 32] != 0) {
             HandlerFunc(pRegs);

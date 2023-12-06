@@ -9,8 +9,10 @@
 #include <arch/x86_64/mm/pmm.h>
 #include <arch/x86_64/mm/vmm.h>
 #include <flanterm/flanterm.h>
+#include <exec/flat/flat.h>
 #include <kernel/kernel.h>
 #include <drivers/mouse.h>
+#include <exec/syscall.h>
 #include <libc/printf.h>
 #include <sched/sched.h>
 #include <drivers/kb.h>
@@ -38,15 +40,9 @@ struct limine_file* findModule(int pos) {
 
 Framebuffer* Flanterm_FB;
 
-void Task1() {
+void IdleTask() {
     while(1) {
-        printf("Task1\n");
-    }
-}
-
-void Task2() {
-    while(1) {
-        printf("Task2\n");
+        asm ("hlt");
     }
 }
 
@@ -74,6 +70,8 @@ void _start(void) {
     Heap_Init((uptr)toHigherHalf(PMM_Alloc(1)));
 
     VBE_Init();
+    KB_Init();
+    Syscall_Init();
 
     Flanterm_FB = FB_CreateNewFB(
         200, 200, 500, 500, VBE->pitch
@@ -85,8 +83,14 @@ void _start(void) {
         VBE->pitch
     );
 
-    Sched_CreateNewTask(Task1);
-    Sched_CreateNewTask(Task2);
+    //Sched_CreateNewTask(IdleTask);
+    //Sched_CreateNewTask(Task1);
+    //PIT_Init();
+
+    void* binEntryFunc = Flat_Exec(findModule(0)->address, findModule(0)->size);
+
+    Sched_CreateNewTask(IdleTask);
+    Sched_CreateNewTask(binEntryFunc);
 
     PIT_Init();
 

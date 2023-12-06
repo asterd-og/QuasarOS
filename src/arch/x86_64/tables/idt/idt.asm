@@ -115,28 +115,29 @@ IsrNoErrStub 29
 IsrErrStub    30
 IsrNoErrStub 31
 
-IrqStub 32
-IrqStub 33
-IrqStub 34
-IrqStub 35
-IrqStub 36
-IrqStub 37
-IrqStub 38
-IrqStub 39
-IrqStub 40
-IrqStub 41
-IrqStub 42
-IrqStub 43
-IrqStub 44
-IrqStub 45
-IrqStub 46
-IrqStub 47
+IrqStub 32 ; 0
+IrqStub 33 ; 1
+IrqStub 34 ; 2
+IrqStub 35 ; 3
+IrqStub 36 ; 4
+IrqStub 37 ; 5
+IrqStub 38 ; 6
+IrqStub 39 ; 7
+IrqStub 40 ; 8
+IrqStub 41 ; 9
+IrqStub 42 ; 10
+IrqStub 43 ; 11
+IrqStub 44 ; 12
+IrqStub 45 ; 13
+IrqStub 46 ; 14
+IrqStub 47 ; 15
+IrqStub 48 ; syscall
 
 section .data
 
 IDT_IntTable:
     %assign i 0
-    %rep 48
+    %rep 49
         dq IntStub%+i
         %assign i i+1
     %endrep

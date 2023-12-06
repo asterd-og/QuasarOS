@@ -8,4 +8,7 @@
 extern u32 Mouse_X;
 extern u32 Mouse_Y;
 
+extern bool Mouse_LeftPressed;
+extern bool Mouse_RightPressed;
+
 void Mouse_Init();

@@ -1,11 +1,15 @@
 #include <drivers/mouse.h>
 #include <libc/lock.h>
+#include <sched/sched.h>
 
 u8 Mouse_State = 0;
 u8 Mouse_Bytes[3];
 
 u32 Mouse_X = 0;
 u32 Mouse_Y = 0;
+
+bool Mouse_LeftPressed;
+bool Mouse_RightPressed;
 
 void Mouse_WaitWrite() {
     while ((inb(0x64) & 2) != 0) {;}
@@ -27,10 +31,8 @@ u8 Mouse_Read() {
     return inb(0x60);
 }
 
-static Locker Mouse_Lock;
-
 void Mouse_Update(i8 accelX, i8 accelY) {
-    Lock(&Mouse_Lock);
+    Sched_Lock();
     
     Mouse_X += accelX;
     Mouse_Y -= accelY;
@@ -40,10 +42,12 @@ void Mouse_Update(i8 accelX, i8 accelY) {
     if (Mouse_X > VBE->width) Mouse_X = VBE->width;
     if (Mouse_Y > VBE->height) Mouse_Y = VBE->height;
     
-    Unlock(&Mouse_Lock);
+    Sched_Unlock();
 }
 
 void Mouse_Handler(Registers* regs) {
+    Sched_Lock();
+
     (void)regs;
     u8 byte = inb(0x64);
     if ((!(byte & 1)) == 1) { Mouse_State = 0; return; }
@@ -69,9 +73,14 @@ void Mouse_Handler(Registers* regs) {
 
             Mouse_Update(Mouse_Bytes[1], Mouse_Bytes[2]);
 
+            Mouse_LeftPressed = (bool)(Mouse_Bytes[0] & 0b00000001);
+            Mouse_RightPressed = (bool)((Mouse_Bytes[0] & 0b00000010) >> 1);
+
             Mouse_State = 0;
             break;
     }
+
+    Sched_Unlock();
 }
 
 void Mouse_Init() {
