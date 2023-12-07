@@ -4,11 +4,10 @@ void syscall(int vector, void* arg1, void* arg2);
 void putf(const char* str, void* val);
 void puts(const char* str);
 
-_start() {
-    char msg[] = "Tasking!";
-    while(1) {
-        puts(msg);
-    }
+int _start() {
+    char msg[] = "*scuffed neofetch here*\n";
+    puts(msg);
+    return 0;
 }
 
 void syscall(int vector, void* arg1, void* arg2) {

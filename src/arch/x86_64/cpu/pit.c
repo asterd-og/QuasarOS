@@ -2,7 +2,6 @@
 #include <sched/sched.h>
 
 u64 PIT_Tick = 0;
-//u64 Sched_Tick = 0;
 
 void PIT_Sleep(u64 ms) {
     u64 start = PIT_Tick;
@@ -11,7 +10,6 @@ void PIT_Sleep(u64 ms) {
 
 void PIT_Handler(Registers* regs) {
     PIT_Tick++;
-    //Sched_Tick++;
     Sched_Schedule(regs);
 }
 

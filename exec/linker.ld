@@ -5,11 +5,6 @@ SECTIONS {
     . = 0x100000;  /* Start address of the code section */
     .text : {
         *(.text)  /* Place all code here */
-    }
-
-    /* Strings section */
-    . = ALIGN(4);  /* Align to a 4-byte boundary */
-    .strings : {
         *(.rodata)  /* Place read-only data (strings) here */
         *(.data)    /* Place other data here */
         *(.bss)     /* Uninitialized data (if needed) */

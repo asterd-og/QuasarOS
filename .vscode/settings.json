@@ -12,6 +12,7 @@
         "types.h": "c",
         "stdbool.h": "c",
         "stdint.h": "c",
-        "gdt.h": "c"
+        "gdt.h": "c",
+        "pit.h": "c"
     }
 }

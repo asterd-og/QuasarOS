@@ -40,12 +40,6 @@ struct limine_file* findModule(int pos) {
 
 Framebuffer* Flanterm_FB;
 
-void IdleTask() {
-    while(1) {
-        asm ("hlt");
-    }
-}
-
 void _start(void) {
     HHDM_Offset = hhdmReq.response->offset;
 
@@ -83,13 +77,10 @@ void _start(void) {
         VBE->pitch
     );
 
-    //Sched_CreateNewTask(IdleTask);
-    //Sched_CreateNewTask(Task1);
-    //PIT_Init();
-
     void* binEntryFunc = Flat_Exec(findModule(0)->address, findModule(0)->size);
 
-    Sched_CreateNewTask(IdleTask);
+    Sched_Init();
+
     Sched_CreateNewTask(binEntryFunc);
 
     PIT_Init();
