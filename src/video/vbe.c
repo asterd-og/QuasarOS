@@ -1,7 +1,5 @@
 #include <video/vbe.h>
-#include <libc/lock.h>
-
-static Locker VBE_Lock;
+#include <sched/sched.h>
 
 volatile struct limine_framebuffer_request FB_Req = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
@@ -19,10 +17,10 @@ void VBE_Init() {
 }
 
 void VBE_Update() {
-    Lock(&VBE_Lock);
+    Sched_Lock();
     for (u32 i = 0; i < VBE->width * VBE->height; i++)
         FB_Addr[i] = VBE->buffer[i];
-    Unlock(&VBE_Lock);
+    Sched_Unlock();
 }
 
 u32* VBE_GetAddr() {

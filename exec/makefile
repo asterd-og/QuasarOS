@@ -1,6 +1,5 @@
 all:
-	gcc -m64 -nostdlib -fPIC -fPIE -C main.c -o bin
-	objcopy -O binary -j .text bin bin
+	gcc -m64 -nostdlib -C main.c -o bin
 
 clean:
 	rm -fdr bin main.o

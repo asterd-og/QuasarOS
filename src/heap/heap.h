@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <arch/x86_64/mm/pmm.h>
+#include <arch/x86_64/mm/vmm.h>
 
 #define Heap_Magic 0xdeadfacade
 

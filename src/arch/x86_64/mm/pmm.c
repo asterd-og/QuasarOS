@@ -11,18 +11,21 @@ static volatile struct limine_memmap_request mmapReq = {
     .revision = 0
 };
 
+struct limine_memmap_response MMap_Data;
+
 void PMM_Init() {
     u64 higherAddr;
     u64 topAddr;
 
-    struct limine_memmap_response* MMap_Data = mmapReq.response;
+    struct limine_memmap_response* PMM_MMapData = mmapReq.response;
+    MMap_Data = *PMM_MMapData;
 
-    for (u64 i = 0; i < MMap_Data->entry_count; i++) {
-        Serial_Printf("%x - %lx | %ld\n", MMap_Data->entries[i]->type,
-            MMap_Data->entries[i]->base, MMap_Data->entries[i]->length);
-        if (MMap_Data->entries[i]->type == LIMINE_MEMMAP_USABLE) {
-            topAddr = MMap_Data->entries[i]->base +
-                      MMap_Data->entries[i]->length;
+    for (u64 i = 0; i < PMM_MMapData->entry_count; i++) {
+        Serial_Printf("%x - %lx | %ld\n", PMM_MMapData->entries[i]->type,
+            PMM_MMapData->entries[i]->base, PMM_MMapData->entries[i]->length);
+        if (PMM_MMapData->entries[i]->type == LIMINE_MEMMAP_USABLE) {
+            topAddr = PMM_MMapData->entries[i]->base +
+                      PMM_MMapData->entries[i]->length;
             
             if (topAddr > higherAddr) {
                 higherAddr = topAddr;
@@ -34,22 +37,22 @@ void PMM_Init() {
     PMM_Pages = higherAddr / pageSize;
     PMM_BitmapSize = alignUp(PMM_Pages / 8, pageSize);
 
-    for (u64 i = 0; i < MMap_Data->entry_count; i++) {
-        if (MMap_Data->entries[i]->type == LIMINE_MEMMAP_USABLE) {
-            if (MMap_Data->entries[i]->length >= PMM_BitmapSize) {
-                PMM_Bitmap = (u8*)toHigherHalf(MMap_Data->entries[i]->base);
+    for (u64 i = 0; i < PMM_MMapData->entry_count; i++) {
+        if (PMM_MMapData->entries[i]->type == LIMINE_MEMMAP_USABLE) {
+            if (PMM_MMapData->entries[i]->length >= PMM_BitmapSize) {
+                PMM_Bitmap = (u8*)toHigherHalf(PMM_MMapData->entries[i]->base);
                 memset(PMM_Bitmap, 0xFF, PMM_BitmapSize);
-                MMap_Data->entries[i]->base += PMM_BitmapSize;
-                MMap_Data->entries[i]->length -= PMM_BitmapSize;
+                PMM_MMapData->entries[i]->base += PMM_BitmapSize;
+                PMM_MMapData->entries[i]->length -= PMM_BitmapSize;
                 break;
             }
         }
     }
 
-    for (u64 i = 0; i < MMap_Data->entry_count; ++i) {
-        if (MMap_Data->entries[i]->type == LIMINE_MEMMAP_USABLE) {
-            for (u64 j = 0; j < MMap_Data->entries[i]->length; j += pageSize) {
-                Bitmap_ClearBit(PMM_Bitmap, (MMap_Data->entries[i]->base + j) / pageSize);
+    for (u64 i = 0; i < PMM_MMapData->entry_count; ++i) {
+        if (PMM_MMapData->entries[i]->type == LIMINE_MEMMAP_USABLE) {
+            for (u64 j = 0; j < PMM_MMapData->entries[i]->length; j += pageSize) {
+                Bitmap_ClearBit(PMM_Bitmap, (PMM_MMapData->entries[i]->base + j) / pageSize);
             }
         }
     }

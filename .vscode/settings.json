@@ -13,6 +13,7 @@
         "stdbool.h": "c",
         "stdint.h": "c",
         "gdt.h": "c",
-        "pit.h": "c"
+        "pit.h": "c",
+        "bitmap.h": "c"
     }
 }

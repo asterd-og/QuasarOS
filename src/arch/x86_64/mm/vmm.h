@@ -24,5 +24,10 @@ extern symbol Data_StartAddr;
 extern symbol Data_EndAddr;
 
 void VMM_Init();
-void PageMap_Virt2Phys(VMM_PageMap* pageMap, uptr physAddr, uptr virtAddr, uptr flags);
-void* PageMap_AllocPage(VMM_PageMap* pageMap);
+void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages);
+void* VMM_FreePages(VMM_PageMap* pageMap, void* ptr, u64 pages);
+
+VMM_PageMap* PageMap_New();
+void PageMap_Map(VMM_PageMap* pageMap, uptr physAddr, uptr virtAddr, uptr flags);
+void PageMap_Unmap(VMM_PageMap* pageMap, uptr virtAddr);
+void PageMap_Load(VMM_PageMap* pageMap);

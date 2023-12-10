@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <arch/x86_64/tables/idt/idt.h>
+#include <arch/x86_64/mm/vmm.h>
 #include <heap/heap.h>
 
 #define Sched_MaxTaskLimit 16
@@ -15,8 +16,8 @@ typedef struct {
     Registers regs;
     u64 TID; // Task ID
     u8 state;
-    u64 ret;
-} Sched_Task;
+    VMM_PageMap* pageMap;
+} __attribute__((packed)) Sched_Task;
 
 void Sched_Init();
 

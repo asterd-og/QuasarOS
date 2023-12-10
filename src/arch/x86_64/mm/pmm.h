@@ -8,6 +8,9 @@
 #include <libc/string.h>
 
 #define toHigherHalf(ptr) ((void*)(ptr) + hhdmReq.response->offset)
+#define toPhysical(ptr) ((void*)(ptr) - hhdmReq.response->offset)
+
+extern struct limine_memmap_response MMap_Data;
 
 void  PMM_Init();
 void* PMM_Alloc(u64 pages);

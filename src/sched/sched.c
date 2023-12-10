@@ -25,7 +25,6 @@ void Sched_Init() {
 
 void Sched_Wrapper(void* addr) {
     ((void(*)())addr)();
-    Sched_CurrentTask->ret = Sched_CurrentTask->regs.rax;
     Sched_CurrentTask->state = DEAD;
     while (1) {
         asm ("hlt");
@@ -51,7 +50,7 @@ Sched_Task* Sched_CreateNewTask(void* addr) {
     task->regs.rflags = 0x202; // Interrupts enabled + necessary bit
     task->regs.rsp = (u64)stackPtr;
 
-    task->ret = 0;
+    task->pageMap = PageMap_New();
 
     task->state = RUNNING;
 
@@ -98,6 +97,8 @@ u64 Sched_GetCurrentTID() {
 }
 
 void Sched_Schedule(Registers* regs) {
+    Sched_Lock();
+
     if (Sched_CurrentTask != NULL) {
         if (Sched_CurrentTask->state == DEAD) {
             Sched_RemoveTask(Sched_CurrentTask->TID);
@@ -105,17 +106,20 @@ void Sched_Schedule(Registers* regs) {
             Sched_CTID = 0;
             return;
         }
-        memcpy(&Sched_CurrentTask->regs, regs, sizeof(Registers));
-        Sched_CurrentTask = Sched_TaskList[Sched_CTID];
-        memcpy(regs, &Sched_CurrentTask->regs, sizeof(Registers));
-        Sched_CTID++;
-        if (Sched_CTID == Sched_TID) {
-            Sched_CTID = 0;
-        }
-    } else {
-        Sched_CurrentTask = Sched_TaskList[Sched_CTID];
-        memcpy(regs, &Sched_CurrentTask->regs, sizeof(Registers));
+
+        Sched_CurrentTask->regs = *regs;
     }
+
+    Sched_CurrentTask = Sched_TaskList[Sched_CTID];
+    *regs = Sched_CurrentTask->regs;
+    PageMap_Load(Sched_CurrentTask->pageMap);
+
+    Sched_CTID++;
+    if (Sched_CTID == Sched_TID) {
+        Sched_CTID = 0;
+    }
+
+    Sched_Unlock();
 }
 
 void Sched_Lock() {

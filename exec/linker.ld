@@ -1,15 +1,23 @@
-ENTRY(_start)  /* Entry point symbol */
-
-SECTIONS {
-    /* Code section */
-    . = 0x100000;  /* Start address of the code section */
-    .text : {
-        *(.text)  /* Place all code here */
-        *(.rodata)  /* Place read-only data (strings) here */
-        *(.data)    /* Place other data here */
-        *(.bss)     /* Uninitialized data (if needed) */
+ENTRY(main)
+SECTIONS
+{
+    . = 8M;
+    .text BLOCK(4K) : ALIGN(4K)
+    {
+        *(.text)
     }
-
-    /* Ensure overall alignment of the binary */
-    . = ALIGN(4096);  /* Align to a 4KB boundary */
+    .rodata BLOCK(4K) : ALIGN(4K)
+    {
+        *(.rodata)
+    }
+    .data BLOCK(4K) : ALIGN(4K)
+    {
+        *(.data)
+    }
+    .bss BLOCK(4K) : ALIGN(4K)
+    {
+        *(COMMON)
+        *(.bss)
+        *(.bootstrap_stack)
+    }
 }

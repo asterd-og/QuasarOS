@@ -20,29 +20,18 @@ u64 ELF_Exec(u64* addr) {
         Serial_Printf("ELF Not executable!\n");
         return 0;
     }
-    
-    void* baseAddr;
-    u64 vAddrStart;
-    u64 vAddrEnd;
-    u64 ret;
 
+    //u64 size = 0;
     ELF_ProgramHeader* pHdr = (ELF_ProgramHeader*)((char*)addr + hdr->phoff);
     for (u64 i = 0; i < hdr->entryPhCount; i++, pHdr++) {
         if (pHdr->type == ELF_PHDRLoad) {
             Serial_Printf("Found PHDR!\n");
-            vAddrStart = pHdr->vaddr & ~(pageSize - 1);
-            vAddrEnd = (pHdr->vaddr + pHdr->memSize + pageSize - 1) & ~(pageSize - 1);
-            baseAddr = Heap_PAlloc(pHdr->memSize);
-            for (u64 i = vAddrStart; i < vAddrEnd; i += pageSize) {
-                PageMap_Virt2Phys(VMM_CurrentPageMap, (uptr)baseAddr + i, i, VMM_FlagPresent | VMM_FlagWrite);
-            }
-            memcpy((void*)vAddrStart, addr + pHdr->offset, pHdr->fileSize);
-            if (pHdr->flags == ELF_FlagX + ELF_FlagR + ELF_FlagW || pHdr->flags == ELF_FlagX + ELF_FlagR) {
-                ret = hdr->entry + vAddrStart;
-                Serial_Printf("Found program start at %lx\n", ret);
-            }
+            //
         }
     }
 
-    return ret;
+    //void* ret = Heap_Alloc(4096);
+    //memcpy(ret, hdr->entry, );
+
+    return 0;
 }
