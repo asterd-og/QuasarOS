@@ -14,6 +14,7 @@
         "stdint.h": "c",
         "gdt.h": "c",
         "pit.h": "c",
-        "bitmap.h": "c"
+        "bitmap.h": "c",
+        "string.h": "c"
     }
 }

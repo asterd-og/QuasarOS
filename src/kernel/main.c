@@ -12,9 +12,11 @@
 #include <exec/flat/flat.h>
 #include <kernel/kernel.h>
 #include <drivers/mouse.h>
+#include <initrd/quasfs.h>
 #include <exec/syscall.h>
 #include <libc/printf.h>
 #include <sched/sched.h>
+#include <shell/shell.h>
 #include <drivers/kb.h>
 #include <video/vbe.h>
 #include <heap/heap.h>
@@ -72,11 +74,17 @@ void _start(void) {
         VBE->pitch
     );
 
+    QuasFS_Init(findModule(0)->address);
+
+    char* addr = QuasFS_Read("shell");
+    if (addr == NULL) {
+        printf("dang");
+    }
+
     Sched_Init();
-
-    Sched_CreateNewElf(findModule(0)->address);
-
+    Sched_CreateNewElf(addr);
     PIT_Init();
+
 
     for (;;);
 }

@@ -64,7 +64,7 @@ Sched_Task* Sched_CreateNewTask(void* addr) {
     return task;
 }
 
-Sched_Task* Sched_CreateNewElf(void* addr) {
+void Sched_CreateNewElf(char* addr) {
     Sched_Lock();
 
     Sched_Task* task = (Sched_Task*)Heap_Alloc(sizeof(Sched_Task));
@@ -91,14 +91,13 @@ Sched_Task* Sched_CreateNewElf(void* addr) {
     Sched_TID++;
 
     Sched_Unlock();
-
-    return task;
 }
 
 void Sched_KillTask(u64 TID) {
     Sched_Lock();
     if (TID > 0) {
         // IDLE is unkillable
+        printf("killing task %ld\n", TID);
         Sched_TaskList[TID]->state = DEAD;
     }
     Sched_Unlock();

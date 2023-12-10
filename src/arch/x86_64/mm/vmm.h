@@ -14,6 +14,7 @@
 typedef uptr VMM_PageMap;
 
 extern VMM_PageMap* VMM_CurrentPageMap;
+extern VMM_PageMap* PageMap_Kernel;
 
 extern symbol Text_StartAddr;
 extern symbol Text_EndAddr;

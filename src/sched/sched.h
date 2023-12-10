@@ -22,7 +22,7 @@ typedef struct {
 void Sched_Init();
 
 Sched_Task* Sched_CreateNewTask(void* addr);
-Sched_Task* Sched_CreateNewElf(void* addr);
+void Sched_CreateNewElf(char* addr);
 
 void Sched_KillTask(u64 TID);
 void Sched_RemoveTask(u64 TID);

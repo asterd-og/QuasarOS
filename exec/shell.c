@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 int main() {
     puts("Welcome to Quasar's shell V 0.1!\n");
@@ -43,6 +44,31 @@ void puts(const char* str) {
     syscall(0, str, 0);
 }
 
+char** dir() {
+    syscall(3, 0, 0);
+    char** ret;
+    asm("":"=a"(ret)::);
+    return ret;
+}
+
+int getEntries() {
+    int ret;
+    syscall(4, 0, 0);
+    asm("":"=a"(ret)::);
+    return ret;
+}
+
+char* read(char* name) {
+    syscall(5, name, 0);
+    char* ret;
+    asm("":"=a"(ret)::);
+    return ret;
+}
+
+void newElf(char* name) {
+    syscall(6, name, 0);
+}
+
 int strlen(const char* pStr) {
     int i = 0;
     while (*pStr != '\0') {
@@ -69,9 +95,11 @@ struct commandStruct {
 };
 
 void CmdHelp(void);
+void CmdLs(void);
 
 const struct commandStruct commands[] = {
     {"help", &CmdHelp, "Help menu."},
+    {"ls", &CmdLs, "Lists the directory."},
     {"",0,""}
 };
 
@@ -87,9 +115,27 @@ void CmdHandler(char * cmd)
         }
         i++;
     }
-    putf("WARNING: No matching cmd for %s.\n", cmd);
+    if (read(cmd) == NULL) {
+        putf("No matching program for '%s'\n", cmd);
+    }
+    newElf(cmd);
+}
+
+void CmdLs() {
+    char** dir_ = dir();
+    for (int i = 0; i < getEntries(); i++) {
+        putf("%s ", dir_[i]);
+    }
+    puts("\n");
 }
 
 void CmdHelp() {
     puts("QuasarOS Shell program. Version 0.1. Running inside an ELF file.\n");
+    int i = 0;
+    while(commands[i].execute > 0)
+    {
+        putf("%s - ", commands[i].name);
+        putf("%s\n", commands[i].help);
+        i++;
+    }
 }

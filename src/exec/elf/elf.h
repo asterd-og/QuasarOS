@@ -57,4 +57,4 @@ typedef struct {
 #define ELF_FlagW 0x2
 #define ELF_FlagR 0x4
 
-u64 ELF_Exec(u64* addr, VMM_PageMap* pageMap);
+u64 ELF_Exec(char* addr, VMM_PageMap* pageMap);

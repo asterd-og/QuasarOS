@@ -17,6 +17,12 @@ int strcmp(const char* x, const char* y) {
     return 0;
 }
 
+void strcpy(char* dest, const char* src) {
+    for (int i = 0; i < strlen(src); i++) {
+        dest[i] = src[i];
+    }
+}
+
 void *memcpy(void *dest, const void *src, size_t n) {
     uint8_t *pdest = (uint8_t *)dest;
     const uint8_t *psrc = (const uint8_t *)src;

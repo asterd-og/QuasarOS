@@ -1,6 +1,6 @@
 #include <exec/elf/elf.h>
 
-u64 ELF_Exec(u64* addr, VMM_PageMap* pageMap) {
+u64 ELF_Exec(char* addr, VMM_PageMap* pageMap) {
     ELF_Header* hdr = (ELF_Header*)addr;
 
     if (hdr->magic[0] != 0x7f || hdr->magic[1] != 'E' ||
