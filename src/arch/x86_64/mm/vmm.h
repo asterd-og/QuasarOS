@@ -9,6 +9,9 @@
 #define VMM_FlagWrite (0b1ull << 1)
 #define VMM_FlagUser (0b1ull << 2)
 #define VMM_FlagNoExec (0b1ull << 63)
+#define VMM_FlagExec 0x04
+
+#define VMM_MapAnon 0x08
 
 typedef uptr VMM_PageMap;
 
@@ -24,7 +27,7 @@ extern symbol Data_StartAddr;
 extern symbol Data_EndAddr;
 
 void VMM_Init();
-void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages);
+void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags);
 void* VMM_FreePages(VMM_PageMap* pageMap, void* ptr, u64 pages);
 
 VMM_PageMap* PageMap_New();

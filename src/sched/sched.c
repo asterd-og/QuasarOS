@@ -2,6 +2,7 @@
 #include <arch/x86_64/cpu/serial.h>
 #include <libc/lock.h>
 #include <libc/printf.h>
+#include <exec/elf/elf.h>
 
 Sched_Task* Sched_TaskList[Sched_MaxTaskLimit] = {};
 Sched_Task* Sched_CurrentTask = NULL;
@@ -63,6 +64,37 @@ Sched_Task* Sched_CreateNewTask(void* addr) {
     return task;
 }
 
+Sched_Task* Sched_CreateNewElf(void* addr) {
+    Sched_Lock();
+
+    Sched_Task* task = (Sched_Task*)Heap_Alloc(sizeof(Sched_Task));
+    task->TID = Sched_TID;
+
+    char* stack = (char*)Heap_Alloc(0x4000);
+    memset(stack, 0, 0x4000);
+
+    u64* stackPtr = (u64*)(stack + 0x4000);
+
+    task->pageMap = PageMap_New();
+
+    task->regs.rip = (u64)Sched_Wrapper;
+    task->regs.rdi = ELF_Exec(addr, task->pageMap);
+    task->regs.cs = 0x28;
+    task->regs.ss = 0x10;
+    task->regs.rflags = 0x202; // Interrupts enabled + necessary bit
+    task->regs.rsp = (u64)stackPtr;
+
+    task->state = RUNNING;
+
+    Sched_TaskList[Sched_TID] = task;
+
+    Sched_TID++;
+
+    Sched_Unlock();
+
+    return task;
+}
+
 void Sched_KillTask(u64 TID) {
     Sched_Lock();
     if (TID > 0) {
@@ -97,7 +129,6 @@ u64 Sched_GetCurrentTID() {
 }
 
 void Sched_Schedule(Registers* regs) {
-    Sched_Lock();
 
     if (Sched_CurrentTask != NULL) {
         if (Sched_CurrentTask->state == DEAD) {
@@ -119,7 +150,6 @@ void Sched_Schedule(Registers* regs) {
         Sched_CTID = 0;
     }
 
-    Sched_Unlock();
 }
 
 void Sched_Lock() {

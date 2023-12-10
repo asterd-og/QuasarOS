@@ -46,7 +46,7 @@ uptr* PageMap_WalkEntry(uptr* directory, uptr entry, uptr flags, bool allocIfNul
     }
 }
 
-void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages) {
+void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags) {
     uptr addr = (uptr)PMM_Alloc(pages);
     addr = alignDown(addr, pageSize);
     
@@ -54,9 +54,9 @@ void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages) {
     uptr phys;
 
     for (u64 i = 0; i < pages; i++) {
-        virt = addr + (i * pageSize);
-        phys = virt;
-        PageMap_Map(pageMap, phys, virt, VMM_FlagPresent | VMM_FlagWrite);
+        virt = vaddr + (i * pageSize);
+        phys = addr + (i * pageSize);
+        PageMap_Map(pageMap, phys, virt, flags);
     }
 
     return (void*)addr;

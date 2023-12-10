@@ -1,6 +1,9 @@
 #pragma once
 
 #include <types.h>
+#include <arch/x86_64/mm/vmm.h>
+#include <heap/heap.h>
+#include <libc/printf.h>
 
 typedef struct {
     char magic[4];
@@ -54,4 +57,4 @@ typedef struct {
 #define ELF_FlagW 0x2
 #define ELF_FlagR 0x4
 
-u64 ELF_Exec(u64* addr);
+u64 ELF_Exec(u64* addr, VMM_PageMap* pageMap);

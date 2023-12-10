@@ -40,18 +40,6 @@ struct limine_file* findModule(int pos) {
 
 Framebuffer* Flanterm_FB;
 
-void task1() {
-    while(1) {
-        printf("task1\n");
-    }
-}
-
-void task2() {
-    while(1) {
-        printf("task2\n");
-    }
-}
-
 void _start(void) {
     HHDM_Offset = hhdmReq.response->offset;
 
@@ -64,19 +52,14 @@ void _start(void) {
     PIC_Remap();
 
     asm ("sti");
+    KB_Init();
 
     PMM_Init();
-
-    Serial_Printf("Loading VMM.\n");
-
     VMM_Init();
-
-    Serial_Printf("VMM Loaded.\n");
 
     Heap_Init((uptr)toHigherHalf(PMM_Alloc(1)));
 
     VBE_Init();
-    KB_Init();
     Syscall_Init();
 
     Flanterm_FB = FB_CreateNewFB(
@@ -90,8 +73,9 @@ void _start(void) {
     );
 
     Sched_Init();
-    Sched_CreateNewTask(task1);
-    Sched_CreateNewTask(task2);
+
+    Sched_CreateNewElf(findModule(0)->address);
+
     PIT_Init();
 
     for (;;);

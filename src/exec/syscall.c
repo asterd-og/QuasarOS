@@ -1,5 +1,6 @@
 #include <exec/syscall.h>
 #include <sched/sched.h>
+#include <drivers/kb.h>
 
 /*
 Syscalls spec:
@@ -19,6 +20,10 @@ void Syscall_Handler(Registers* regs) {
         case 0x01:
             // putf
             printf((char*)regs->rbx, regs->rcx);
+            break;
+        case 0x02:
+            // KB Get char
+            regs->rax = KB_GetChar();
             break;
     }
     Sched_Unlock();
