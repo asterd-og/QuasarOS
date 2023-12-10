@@ -11,8 +11,6 @@
 #define VMM_FlagNoExec (0b1ull << 63)
 #define VMM_FlagExec 0x04
 
-#define VMM_MapAnon 0x08
-
 typedef uptr VMM_PageMap;
 
 extern VMM_PageMap* VMM_CurrentPageMap;
