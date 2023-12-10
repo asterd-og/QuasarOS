@@ -29,6 +29,7 @@ void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags);
 void* VMM_FreePages(VMM_PageMap* pageMap, void* ptr, u64 pages);
 
 VMM_PageMap* PageMap_New();
+void PageMap_Delete(VMM_PageMap* pageMap);
 void PageMap_Map(VMM_PageMap* pageMap, uptr physAddr, uptr virtAddr, uptr flags);
 void PageMap_Unmap(VMM_PageMap* pageMap, uptr virtAddr);
 void PageMap_Load(VMM_PageMap* pageMap);

@@ -107,7 +107,8 @@ void Sched_KillTask(u64 TID) {
 void Sched_RemoveTask(u64 TID) {
     Sched_Lock();
     
-    Heap_Free((void*)((u64*)(Sched_TaskList[TID]->regs.rsp)));
+    PageMap_Delete(Sched_TaskList[TID]->pageMap);
+    Heap_Free((void*)((u64*)(Sched_TaskList[TID]->regs.rsp - 0x4000)));
     Heap_Free(Sched_TaskList[TID]);
 
     // Re-arrange the task list to account for the dead task
@@ -129,7 +130,6 @@ u64 Sched_GetCurrentTID() {
 }
 
 void Sched_Schedule(Registers* regs) {
-
     if (Sched_CurrentTask != NULL) {
         if (Sched_CurrentTask->state == DEAD) {
             Sched_RemoveTask(Sched_CurrentTask->TID);
@@ -149,7 +149,6 @@ void Sched_Schedule(Registers* regs) {
     if (Sched_CTID == Sched_TID) {
         Sched_CTID = 0;
     }
-
 }
 
 void Sched_Lock() {

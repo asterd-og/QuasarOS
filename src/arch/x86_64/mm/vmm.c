@@ -100,6 +100,16 @@ VMM_PageMap* PageMap_New() {
     return pageMap;
 }
 
+void PageMap_Delete(VMM_PageMap* pageMap) {
+    if (VMM_CurrentPageMap == pageMap) {
+        return; // For now we just return
+    }
+
+    PMM_Free((void*)toPhysical(pageMap), 1);
+    memset(pageMap, 0, pageSize);
+    return;
+}
+
 void PageMap_Map(VMM_PageMap* pageMap, uptr physAddr, uptr virtAddr, uptr flags) {
     uptr pml1Entry = (virtAddr >> 12) & 0x1ff;
     uptr pml2Entry = (virtAddr >> 21) & 0x1ff;
