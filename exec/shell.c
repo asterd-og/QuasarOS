@@ -29,6 +29,7 @@ int main() {
             }
         }
     }
+    while(1);
     return 1;
 }
 
@@ -119,6 +120,7 @@ void CmdHandler(char * cmd)
         putf("No matching program for '%s'\n", cmd);
     }
     newElf(cmd);
+    while(1);
 }
 
 void CmdLs() {

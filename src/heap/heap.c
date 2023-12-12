@@ -49,3 +49,7 @@ void Heap_Free(void* ptr) {
 void* Heap_PAlloc(u64 size) {
     return PMM_Alloc((size > pageSize) ? divRoundUp(size / pageSize, pageSize) : 1);
 }
+
+void* Heap_VAlloc(VMM_PageMap* pageMap, u64 size) {
+    return VMM_AllocPages(pageMap, (size > pageSize) ? divRoundUp(size / pageSize, pageSize) : 1, VMM_FlagPresent | VMM_FlagWrite);
+}

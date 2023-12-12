@@ -10,7 +10,8 @@ void PIT_Sleep(u64 ms) {
 
 void PIT_Handler(Registers* regs) {
     PIT_Tick++;
-    Sched_Schedule(regs);
+    if (!Sched_Paused)
+        Sched_Schedule(regs);
 }
 
 void PIT_Init() {

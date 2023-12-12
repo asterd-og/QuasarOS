@@ -40,11 +40,7 @@ void Syscall_Handler(Registers* regs) {
             break;
         case 0x06:
             // Start new elf task
-            Sched_CreateNewElf(QuasFS_Read((char*)regs->rbx));
-            break;
-        case 0x07:
-            // Exit syscall
-            Sched_KillTask(Sched_GetCurrentTID());
+            Sched_CreateNewElf(QuasFS_Read((char*)regs->rbx), (char*)regs->rbx, true);
             break;
     }
     Sched_Unlock();

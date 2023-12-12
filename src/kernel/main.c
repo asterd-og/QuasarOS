@@ -16,7 +16,6 @@
 #include <exec/syscall.h>
 #include <libc/printf.h>
 #include <sched/sched.h>
-#include <shell/shell.h>
 #include <drivers/kb.h>
 #include <video/vbe.h>
 #include <heap/heap.h>
@@ -41,6 +40,30 @@ struct limine_file* findModule(int pos) {
 }
 
 Framebuffer* Flanterm_FB;
+
+void task1() {
+    while(1) {
+        printf("a");
+    }
+}
+
+void task2() {
+    while(1) {
+        printf("b");
+    }
+}
+
+void task3() {
+    while(1) {
+        printf("c");
+    }
+}
+
+void task4() {
+    while(1) {
+        printf("d");
+    }
+}
 
 void _start(void) {
     HHDM_Offset = hhdmReq.response->offset;
@@ -82,9 +105,8 @@ void _start(void) {
     }
 
     Sched_Init();
-    Sched_CreateNewElf(addr);
+    Sched_QueueTask(Sched_CreateNewElf(addr, "shell", true));
     PIT_Init();
-
 
     for (;;);
 }

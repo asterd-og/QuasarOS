@@ -13,7 +13,6 @@ static volatile struct limine_kernel_file_request Kernel_FileReq = {
 
 VMM_PageMap* PageMap_Kernel;
 VMM_PageMap* VMM_CurrentPageMap;
-void* VMM_LastAlloc = 0;
 
 uptr physBase;
 uptr virtBase;
@@ -30,6 +29,10 @@ void* readCR3() {
 }
 
 uptr* PageMap_WalkEntry(uptr* directory, uptr entry, uptr flags, bool allocIfNull) {
+    if (directory == NULL) {
+        Serial_Printf("PageMap_Map: Directory is NULL.\n");
+        return NULL;
+    }
     if (directory[entry] & VMM_FlagPresent) {
         // If the page exists
         return toHigherHalf(directory[entry] & 0x000FFFFFFFFFF000);
@@ -38,6 +41,9 @@ uptr* PageMap_WalkEntry(uptr* directory, uptr entry, uptr flags, bool allocIfNul
         // If it wasn't found
         if (allocIfNull) {
             void* pml = (uptr*)PMM_Alloc(1);
+            if (pml == NULL) {
+                Serial_Printf("PageMap_WalkEntry: Couldn't alloc PML.\n");
+            }
             memset(toHigherHalf(pml), 0, pageSize);
             directory[entry] = (uptr)pml | flags;
             return toHigherHalf(pml);
@@ -46,7 +52,7 @@ uptr* PageMap_WalkEntry(uptr* directory, uptr entry, uptr flags, bool allocIfNul
     }
 }
 
-void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags) {
+void* VMM_AllocMapPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags) {
     uptr addr = (uptr)PMM_Alloc(pages);
     addr = alignDown(addr, pageSize);
     
@@ -62,19 +68,37 @@ void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags) {
     return (void*)addr;
 }
 
+void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr flags) {
+    uptr addr = (uptr)PMM_Alloc(pages);
+    addr = alignDown(addr, pageSize);
+    
+    uptr virt;
+    uptr phys;
+
+    for (u64 i = 0; i < pages; i++) {
+        virt = addr + (i * pageSize);
+        phys = addr + (i * pageSize);
+        PageMap_Map(pageMap, phys, virt, flags);
+    }
+
+    return (void*)addr;
+}
+
 void* VMM_FreePages(VMM_PageMap* pageMap, void* ptr, u64 pages) {
     uptr virt;
     for (u64 i = 0; i < pages; i++) {
         virt = (uptr)ptr + (i * pageSize);
         PageMap_Unmap(pageMap, virt);
     }
+    PMM_Free(ptr, pages);
     return 0;
 }
 
 VMM_PageMap* PageMap_New() {
-    VMM_PageMap* pageMap = (VMM_PageMap*)toHigherHalf(PMM_Alloc(1));
+    void* addr = PMM_Alloc(1);
+    VMM_PageMap* pageMap = (VMM_PageMap*)toHigherHalf(addr);
     memset(pageMap, 0, pageSize);
-    
+
     // Create a new page map and copy contents of kernel page map to new one
     for (u64 i = 256; i < 512; i++) {
         pageMap[i] = PageMap_Kernel[i];
@@ -102,23 +126,36 @@ VMM_PageMap* PageMap_New() {
 
 void PageMap_Delete(VMM_PageMap* pageMap) {
     if (VMM_CurrentPageMap == pageMap) {
-        return; // For now we just return
+        PageMap_Load(PageMap_Kernel);
     }
 
-    PMM_Free((void*)toPhysical(pageMap), 1);
     memset(pageMap, 0, pageSize);
+    PMM_Free((void*)toPhysical(pageMap), 1);
     return;
 }
 
 void PageMap_Map(VMM_PageMap* pageMap, uptr physAddr, uptr virtAddr, uptr flags) {
+    if (pageMap == NULL) {
+        Serial_Printf("PageMap_Map: pageMap is NULL.\n");
+    }
+
     uptr pml1Entry = (virtAddr >> 12) & 0x1ff;
     uptr pml2Entry = (virtAddr >> 21) & 0x1ff;
     uptr pml3Entry = (virtAddr >> 30) & 0x1ff;
     uptr pml4Entry = (virtAddr >> 39) & 0x1ff; // pageMap
 
     uptr* pml3 = PageMap_WalkEntry(pageMap, pml4Entry, VMM_FlagPresent | VMM_FlagWrite, true); // pml4[pml4Entry] = pml3
+    if (pml3 == NULL) {
+        Serial_Printf("PageMap_Map: PML3 of %lx is NULL.\n", virtAddr);
+    }
     uptr* pml2 = PageMap_WalkEntry(pml3, pml3Entry, VMM_FlagPresent | VMM_FlagWrite, true);     // pml3[pml3Entry] = pml2
+    if (pml2 == NULL) {
+        Serial_Printf("PageMap_Map: PML2 of %lx is NULL.\n", virtAddr);
+    }
     uptr* pml1 = PageMap_WalkEntry(pml2, pml2Entry, VMM_FlagPresent | VMM_FlagWrite, true);     // pml2[pml2Entry] = pml1
+    if (pml1 == NULL) {
+        Serial_Printf("PageMap_Map: PML1 of %lx is NULL.\n", virtAddr);
+    }
 
     pml1[pml1Entry] = physAddr | flags;
 }
@@ -130,16 +167,26 @@ void PageMap_Unmap(VMM_PageMap* pageMap, uptr virtAddr) {
     uptr pml4Entry = (virtAddr >> 39) & 0x1ff; // pageMap
 
     uptr* pml3 = PageMap_WalkEntry(pageMap, pml4Entry, VMM_FlagPresent | VMM_FlagWrite, false); // pml4[pml4Entry] = pml3
+    if (pml3 == NULL) {
+        return;
+    }
     uptr* pml2 = PageMap_WalkEntry(pml3, pml3Entry, VMM_FlagPresent | VMM_FlagWrite, false);     // pml3[pml3Entry] = pml2
+    if (pml2 == NULL) {
+        return;
+    }
     uptr* pml1 = PageMap_WalkEntry(pml2, pml2Entry, VMM_FlagPresent | VMM_FlagWrite, false);     // pml2[pml2Entry] = pml1
+    if (pml1 == NULL) {
+        return;
+    }
 
-    pml1[pml1Entry] = 0;
     // Flush page
     asm volatile("invlpg (%0)" : : "b"(virtAddr) : "memory");
+    pml1[pml1Entry] = 0;
 }
 
 void PageMap_Load(VMM_PageMap* pageMap) {
     writeCR3((u64)toPhysical(pageMap));
+    VMM_CurrentPageMap = pageMap;
 }
 
 void VMM_Init() {
@@ -174,23 +221,6 @@ void VMM_Init() {
     for (uptr gb4 = 0; gb4 < 0x100000000; gb4 += pageSize) {
         PageMap_Map(PageMap_Kernel, gb4, gb4, VMM_FlagPresent | VMM_FlagWrite);
         PageMap_Map(PageMap_Kernel, gb4, (uptr)toHigherHalf(gb4), VMM_FlagPresent | VMM_FlagWrite);
-    }
-
-    u64 start = 0;
-    u64 end = 0;
-
-    for (u64 entry = 0; entry < MMap_Data.entry_count; entry++) {
-        start = alignDown(MMap_Data.entries[entry]->base, pageSize);
-        end = alignUp(MMap_Data.entries[entry]->base + MMap_Data.entries[entry]->length, pageSize);
-
-        for (u64 i = start; i < end; i += pageSize) {
-            PageMap_Map(PageMap_Kernel, i, i, VMM_FlagPresent | VMM_FlagWrite);
-            PageMap_Map(PageMap_Kernel, i, (uptr)toHigherHalf(i), VMM_FlagPresent | VMM_FlagWrite);
-        }
-    }
-
-    for (u64 i = 0; i < kernelSize; i += pageSize) {
-        PageMap_Map(PageMap_Kernel, physBase + i, virtBase + i, VMM_FlagPresent | VMM_FlagWrite);
     }
 
     PageMap_Load(PageMap_Kernel);

@@ -3,8 +3,6 @@
 
 int main() {
     puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
-    syscall(0x07, 0, 0);
-    while(1);
     return 0;
 }
 

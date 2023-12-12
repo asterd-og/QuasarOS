@@ -26,7 +26,8 @@ extern symbol Data_StartAddr;
 extern symbol Data_EndAddr;
 
 void VMM_Init();
-void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags);
+void* VMM_AllocMapPages(VMM_PageMap* pageMap, u64 pages, uptr vaddr, uptr flags);
+void* VMM_AllocPages(VMM_PageMap* pageMap, u64 pages, uptr flags);
 void* VMM_FreePages(VMM_PageMap* pageMap, void* ptr, u64 pages);
 
 VMM_PageMap* PageMap_New();

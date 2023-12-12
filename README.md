@@ -14,6 +14,6 @@ x86_64 Hobby Operating System
 - [x] Multi-Tasking
 - [x] ELF Loading
 - [x] Syscalls
+- [x] Ramdisk
+- [ ] QuasarOS Cross Compiler
 - [ ] IPC
-- [ ] Ramdisk
-- [ ] Linkable library

@@ -3,6 +3,7 @@
 #include <libc/lock.h>
 #include <libc/printf.h>
 #include <exec/elf/elf.h>
+#include <initrd/quasfs.h>
 
 Sched_Task* Sched_TaskList[Sched_MaxTaskLimit] = {};
 Sched_Task* Sched_CurrentTask = NULL;
@@ -11,6 +12,10 @@ u64 Sched_CTID = 0;
 u64 Sched_Stage = 0;
 u64 Sched_LockCounter = 0;
 u64 Sched_TempTID = 0;
+bool Sched_Started = 0;
+u64 Sched_Carol = 0;
+
+bool Sched_Paused = 0;
 
 static Locker Sched_AtomicLock;
 
@@ -21,7 +26,9 @@ void Sched_IdleTask() {
 }
 
 void Sched_Init() {
-    Sched_CreateNewTask(Sched_IdleTask);
+    Sched_Task* idle = Sched_CreateNewTask(Sched_IdleTask, "Idle", false);
+    Sched_QueueTask(idle);
+    Sched_Started = true;
 }
 
 void Sched_Wrapper(void* addr) {
@@ -33,11 +40,30 @@ void Sched_Wrapper(void* addr) {
     }
 }
 
-Sched_Task* Sched_CreateNewTask(void* addr) {
+u64 Sched_GetBootTime() {
+    u64 ret;
+    asm volatile("rdtsc" : "=a"(ret));
+    return ret;
+}
+
+void Sched_QueueTask(Sched_Task* task) {
+    Sched_Lock();
+    Sched_Paused = 1;
+
+    Sched_TaskList[Sched_TID] = task;
+    Sched_TID++;
+
+    Sched_Paused = 0;
+    Sched_Unlock();
+}
+
+Sched_Task* Sched_CreateNewTask(void* addr, char* name, bool killable) {
     Sched_Lock();
 
     Sched_Task* task = (Sched_Task*)Heap_Alloc(sizeof(Sched_Task));
     task->TID = Sched_TID;
+    task->name = name;
+    task->killable = killable;
 
     char* stack = (char*)Heap_Alloc(0x4000);
     memset(stack, 0, 0x4000);
@@ -55,27 +81,27 @@ Sched_Task* Sched_CreateNewTask(void* addr) {
 
     task->state = RUNNING;
 
-    Sched_TaskList[Sched_TID] = task;
-
-    Sched_TID++;
+    task->startTime = Sched_GetBootTime();
 
     Sched_Unlock();
 
     return task;
 }
 
-void Sched_CreateNewElf(char* addr) {
+Sched_Task* Sched_CreateNewElf(char* addr, char* name, bool killable) {
     Sched_Lock();
-
-    Sched_Task* task = (Sched_Task*)Heap_Alloc(sizeof(Sched_Task));
+    
+    Sched_Task* task = (Sched_Task*)Heap_VAlloc(PageMap_Kernel, sizeof(Sched_Task));
     task->TID = Sched_TID;
+    task->name = name;
+    task->killable = killable;
 
-    char* stack = (char*)Heap_Alloc(0x4000);
+    task->pageMap = PageMap_New();
+
+    char* stack = (char*)Heap_VAlloc(task->pageMap, 0x4000);
     memset(stack, 0, 0x4000);
 
     u64* stackPtr = (u64*)(stack + 0x4000);
-
-    task->pageMap = PageMap_New();
 
     task->regs.rip = (u64)Sched_Wrapper;
     task->regs.rdi = ELF_Exec(addr, task->pageMap);
@@ -85,17 +111,17 @@ void Sched_CreateNewElf(char* addr) {
     task->regs.rsp = (u64)stackPtr;
 
     task->state = RUNNING;
-
-    Sched_TaskList[Sched_TID] = task;
-
-    Sched_TID++;
+    
+    task->startTime = Sched_GetBootTime();
 
     Sched_Unlock();
+
+    return task;
 }
 
 void Sched_KillTask(u64 TID) {
     Sched_Lock();
-    if (TID > 0) {
+    if (Sched_TaskList[TID]->killable) {
         // IDLE is unkillable
         printf("killing task %ld\n", TID);
         Sched_TaskList[TID]->state = DEAD;
@@ -129,6 +155,11 @@ u64 Sched_GetCurrentTID() {
 }
 
 void Sched_Schedule(Registers* regs) {
+    if (Sched_Paused) {
+        while (Sched_Paused) asm("nop");
+        return;
+    }
+
     if (Sched_CurrentTask != NULL) {
         if (Sched_CurrentTask->state == DEAD) {
             Sched_RemoveTask(Sched_CurrentTask->TID);
@@ -137,12 +168,17 @@ void Sched_Schedule(Registers* regs) {
             return;
         }
 
+        Sched_CurrentTask->usage = Sched_GetBootTime() - Sched_CurrentTask->startTime;
         Sched_CurrentTask->regs = *regs;
     }
 
     Sched_CurrentTask = Sched_TaskList[Sched_CTID];
-    *regs = Sched_CurrentTask->regs;
-    PageMap_Load(Sched_CurrentTask->pageMap);
+
+    if (Sched_CurrentTask->state == RUNNING) {
+        PageMap_Load(Sched_CurrentTask->pageMap);
+        *regs = Sched_CurrentTask->regs;
+        Sched_CurrentTask->startTime = Sched_GetBootTime();
+    }
 
     Sched_CTID++;
     if (Sched_CTID == Sched_TID) {
@@ -151,9 +187,11 @@ void Sched_Schedule(Registers* regs) {
 }
 
 void Sched_Lock() {
+    Sched_Paused = true;
     Lock(&Sched_AtomicLock);
 }
 
 void Sched_Unlock() {
     Unlock(&Sched_AtomicLock);
+    Sched_Paused = false;
 }

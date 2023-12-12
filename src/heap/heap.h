@@ -17,3 +17,4 @@ int   Heap_Init(uptr startAddr);
 void* Heap_Alloc(u64 size);
 void  Heap_Free(void* ptr);
 void* Heap_PAlloc(u64 size);
+void* Heap_VAlloc(VMM_PageMap* pageMap, u64 size);
