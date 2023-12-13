@@ -17,6 +17,9 @@
         "bitmap.h": "c",
         "string.h": "c",
         "kb.h": "c",
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "wm.h": "c",
+        "heap.h": "c",
+        "psf2.h": "c"
     }
 }

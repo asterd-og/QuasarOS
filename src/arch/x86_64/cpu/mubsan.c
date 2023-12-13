@@ -77,7 +77,7 @@ void __ubsan_handle_type_mismatch_v1(mubsan_type_mismatch_info_v1* data, uintptr
         reason = "use of a misaligned pointer";
     }
 
-    Serial_Printf("mubsan @ line %u, column %u, file %s: %s, %s type %s at alignment %u at address 0x%lx\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: %s, %s type %s at alignment %u at address 0x%lx\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -88,7 +88,7 @@ void __ubsan_handle_type_mismatch_v1(mubsan_type_mismatch_info_v1* data, uintptr
                ptr);
 }
 void __ubsan_handle_add_overflow(mubsan_overflow* data, uintptr_t lhs, uintptr_t rhs) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: addition overflow, for type %s, expression %lu + %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: addition overflow, for type %s, expression %lu + %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -97,7 +97,7 @@ void __ubsan_handle_add_overflow(mubsan_overflow* data, uintptr_t lhs, uintptr_t
                rhs);
 }
 void __ubsan_handle_sub_overflow(mubsan_overflow* data, uintptr_t lhs, uintptr_t rhs) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: subtraction overflow, for type %s, expression %lu - %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: subtraction overflow, for type %s, expression %lu - %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -106,7 +106,7 @@ void __ubsan_handle_sub_overflow(mubsan_overflow* data, uintptr_t lhs, uintptr_t
                rhs);
 }
 void __ubsan_handle_mul_overflow(mubsan_overflow* data, uintptr_t lhs, uintptr_t rhs) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: multiplication overflow, for type %s, expression %lu * %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: multiplication overflow, for type %s, expression %lu * %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -115,7 +115,7 @@ void __ubsan_handle_mul_overflow(mubsan_overflow* data, uintptr_t lhs, uintptr_t
                rhs);
 }
 void __ubsan_handle_negate_overflow(mubsan_overflow* data, uintptr_t val) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: negate overflow, for type %s, value %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: negate overflow, for type %s, value %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -123,7 +123,7 @@ void __ubsan_handle_negate_overflow(mubsan_overflow* data, uintptr_t val) {
                val);
 }
 void __ubsan_handle_divrem_overflow(mubsan_overflow* data, uintptr_t lhs, uintptr_t rhs) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: divistion overflow, for type %s, expression %lu / %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: divistion overflow, for type %s, expression %lu / %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -132,7 +132,7 @@ void __ubsan_handle_divrem_overflow(mubsan_overflow* data, uintptr_t lhs, uintpt
                rhs);
 }
 void __ubsan_handle_pointer_overflow(mubsan_pointer_overflow* data, uintptr_t base, uintptr_t result) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: pointer overflow, base 0x%lx, result 0x%lx\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: pointer overflow, base 0x%lx, result 0x%lx\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -140,7 +140,7 @@ void __ubsan_handle_pointer_overflow(mubsan_pointer_overflow* data, uintptr_t ba
                result);
 }
 void __ubsan_handle_out_of_bounds(mubsan_out_of_bounds* data, uintptr_t index) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: array out of bounds, for type %s, by index type %s %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: array out of bounds, for type %s, by index type %s %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -149,13 +149,13 @@ void __ubsan_handle_out_of_bounds(mubsan_out_of_bounds* data, uintptr_t index) {
                index);
 }
 void __ubsan_handle_nonnull_arg(mubsan_not_null_arg* data) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: not-null argument is null\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: not-null argument is null\n",
                data->loc.line,
                data->loc.col,
                data->loc.file);
 }
 void __ubsan_handle_load_invalid_value(mubsan_invalid_value* data, uintptr_t val) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: load of invalid value, for type %s, value %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: load of invalid value, for type %s, value %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -163,7 +163,7 @@ void __ubsan_handle_load_invalid_value(mubsan_invalid_value* data, uintptr_t val
                val);
 }
 void __ubsan_handle_shift_out_of_bounds(mubsan_shift_out_of_bounds* data, uintptr_t lhs, uintptr_t rhs) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: shift out of bounds, of type %s and %s, value %lu and %lu\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: shift out of bounds, of type %s and %s, value %lu and %lu\n",
                data->loc.line,
                data->loc.col,
                data->loc.file,
@@ -173,7 +173,7 @@ void __ubsan_handle_shift_out_of_bounds(mubsan_shift_out_of_bounds* data, uintpt
                rhs);
 }
 void __ubsan_handle_builtin_unreachable(mubsan_unreachable* data) {
-    Serial_Printf("mubsan @ line %u, column %u, file %s: unreachable code was reached\n",
+    serial_printf("mubsan @ line %u, column %u, file %s: unreachable code was reached\n",
                data->loc.line,
                data->loc.col,
                data->loc.file);

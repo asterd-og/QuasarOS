@@ -6,5 +6,5 @@ typedef struct {
     bool locked;
 } Locker;
 
-void Lock(Locker* lock);
-void Unlock(Locker* lock);
+void lock(Locker* lock);
+void unlock(Locker* lock);

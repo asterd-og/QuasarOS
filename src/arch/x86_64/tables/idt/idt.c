@@ -3,13 +3,13 @@
 #include <arch/x86_64/cpu/pic.h>
 
 __attribute__((aligned(0x10)))
-static IDT_Entry IDT_Entries[256];
-static IDTR     IDT_Data;
-extern void*    IDT_IntTable[];
+static idt_entry idt_entries[256];
+static idtr      idt_data;
+extern void*     idt_int_table[];
 
-void*  IDT_Handlers[17] = {0};
+void*  idt_handlers[17] = {0};
 
-static const char* IDT_Msgs[32] = {
+static const char* idt_msg[32] = {
     "Division by zero",
     "Debug",
     "Non-maskable interrupt",
@@ -44,55 +44,55 @@ static const char* IDT_Msgs[32] = {
     "Reserved",
 };
 
-void IDT_SetDesc(u8 vec, void* pIsr) {
-    IDT_Entries[vec].low  = (u64)pIsr & 0xFFFF;
-    IDT_Entries[vec].cs   = 0x28;
-    IDT_Entries[vec].ist  = 0;
-    IDT_Entries[vec].attr = (u8)0x8E;
-    IDT_Entries[vec].mid  = ((u64)pIsr >> 16) & 0xFFFF;
-    IDT_Entries[vec].high = ((u64)pIsr >> 32) & 0xFFFFFFFF;
-    IDT_Entries[vec].resv = 0;
+void idt_set_desc(u8 vec, void* pIsr) {
+    idt_entries[vec].low  = (u64)pIsr & 0xFFFF;
+    idt_entries[vec].cs   = 0x28;
+    idt_entries[vec].ist  = 0;
+    idt_entries[vec].attr = (u8)0x8E;
+    idt_entries[vec].mid  = ((u64)pIsr >> 16) & 0xFFFF;
+    idt_entries[vec].high = ((u64)pIsr >> 32) & 0xFFFFFFFF;
+    idt_entries[vec].resv = 0;
 }
 
-void IDT_Init() {
+void idt_init() {
     for (u8 vec = 0; vec < 49; vec++) {
-        IDT_SetDesc(vec, IDT_IntTable[vec]);
+        idt_set_desc(vec, idt_int_table[vec]);
     }
 
-    IDT_Data = (IDTR){
-        .size   = (u16)sizeof(IDT_Entry) * 49 - 1,
-        .offset = (u64)IDT_Entries
+    idt_data = (idtr) {
+        .size   = (u16)sizeof(idt_entry) * 49 - 1,
+        .offset = (u64)idt_entries
     };
 
-    asm ("lidt %0" :: "m"(IDT_Data));
+    asm ("lidt %0" :: "m"(idt_data));
 }
 
-void IRQ_Register(u8 vec, void* pHandler) {
-    IDT_Handlers[vec] = pHandler;
+void irq_register(u8 vec, void* handler) {
+    idt_handlers[vec] = handler;
 }
 
-void IRQ_Unregister(u8 vec) {
-    IDT_Handlers[vec] = 0;
+void irq_unregister(u8 vec) {
+    idt_handlers[vec] = 0;
 }
 
-void ISR_Handler(Registers* pRegs) {
-    IRQ_Unregister(0); // Disable tasking
+void isr_handler(registers* regs) {
+    irq_unregister(0); // Disable tasking
     
     asm volatile("cli");
 
-    Serial_Printf("\nUh oh!\nSomething went wrong: %s\n", IDT_Msgs[pRegs->intNo]);
+    serial_printf("\nUh oh!\nSomething went wrong: %s\n", idt_msg[regs->int_no]);
 
     for (;;)asm volatile("hlt");
 }
 
-void IRQ_Handler(Registers* pRegs) {
-    void(*HandlerFunc)(Registers*);
+void irq_handler(registers* regs) {
+    void(*handler)(registers*);
 
-    HandlerFunc = IDT_Handlers[pRegs->intNo - 32];
+    handler = idt_handlers[regs->int_no - 32];
 
-    if ((u64)IDT_Handlers[pRegs->intNo - 32] != 0) {
-            HandlerFunc(pRegs);
+    if ((u64)idt_handlers[regs->int_no - 32] != 0) {
+            handler(regs);
     }
     
-    PIC_Eoi(pRegs->intNo - 32);
+    pic_eoi(regs->int_no - 32);
 }

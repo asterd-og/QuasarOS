@@ -2,106 +2,102 @@
 #include <libc/lock.h>
 #include <sched/sched.h>
 
-u8 Mouse_State = 0;
-u8 Mouse_Bytes[3];
+u8 mouse_state = 0;
+u8 mouse_bytes[3];
 
-u32 Mouse_X = 0;
-u32 Mouse_Y = 0;
+u32 mouse_x = 0;
+u32 mouse_y = 0;
 
-bool Mouse_LeftPressed;
-bool Mouse_RightPressed;
+bool mouse_left_pressed;
+bool mouse_right_pressed;
 
-void Mouse_WaitWrite() {
+void mouse_wait_write() {
     while ((inb(0x64) & 2) != 0) {;}
 }
 
-void Mouse_WaitRead() {
+void mouse_wait_read() {
     while ((inb(0x64) & 1) != 1) {;}
 }
 
-void Mouse_Write(u8 value) {
-    Mouse_WaitWrite();
+void mouse_write(u8 value) {
+    mouse_wait_write();
     outb(0x64, 0xd4);
-    Mouse_WaitWrite();
+    mouse_wait_write();
     outb(0x60, value);
 }
 
-u8 Mouse_Read() {
-    Mouse_WaitRead();
+u8 mouse_read() {
+    mouse_wait_read();
     return inb(0x60);
 }
 
-void Mouse_Update(i8 accelX, i8 accelY) {
-    Sched_Lock();
-    
-    Mouse_X += accelX;
-    Mouse_Y -= accelY;
+void mouse_update(i8 accel_x, i8 accel_y) {
+    mouse_x += accel_x;
+    mouse_y -= accel_y;
 
-    if (Mouse_X < 0) Mouse_X = 0;
-    if (Mouse_Y < 0) Mouse_Y = 0;
-    if (Mouse_X > VBE->width) Mouse_X = VBE->width;
-    if (Mouse_Y > VBE->height) Mouse_Y = VBE->height;
-    
-    Sched_Unlock();
+    if (mouse_x < 0) mouse_x = 0;
+    if (mouse_y < 0) mouse_y = 0;
+    if (mouse_x > vbe->width) mouse_x = vbe->width;
+    if (mouse_y > vbe->height) mouse_y = vbe->height;
 }
 
-void Mouse_Handler(Registers* regs) {
-    Sched_Lock();
+void mouse_handler(registers* regs) {
+    sched_lock();
 
     (void)regs;
     u8 byte = inb(0x64);
-    if ((!(byte & 1)) == 1) { Mouse_State = 0; return; }
-    if ((!(byte & 2)) == 0) { Mouse_State = 0; return; }
-    if (!(byte & 0x20)) { Mouse_State = 0; return; }
-    switch (Mouse_State) {
+    if ((!(byte & 1)) == 1) { mouse_state = 0; return; }
+    if ((!(byte & 2)) == 0) { mouse_state = 0; return; }
+    if (!(byte & 0x20)) { mouse_state = 0; return; }
+    switch (mouse_state) {
         // Packet state
         case 0:
-            Mouse_WaitRead();
-            Mouse_Bytes[0] = Mouse_Read();
-            Mouse_State++;
+            mouse_wait_read();
+            mouse_bytes[0] = mouse_read();
+            mouse_state++;
             break;
         case 1:
-            Mouse_WaitRead();
-            Mouse_Bytes[1] = Mouse_Read();
-            Mouse_State++;
+            mouse_wait_read();
+            mouse_bytes[1] = mouse_read();
+            mouse_state++;
             break;
         case 2:
-            Mouse_WaitRead();
-            Mouse_Bytes[2] = Mouse_Read();
+            mouse_wait_read();
+            mouse_bytes[2] = mouse_read();
             
-            if (Mouse_Bytes[0] & 0x80 || Mouse_Bytes[0] & 0x40) return;
+            if (mouse_bytes[0] & 0x80 || mouse_bytes[0] & 0x40) return;
 
-            Mouse_Update(Mouse_Bytes[1], Mouse_Bytes[2]);
+            mouse_update(mouse_bytes[1], mouse_bytes[2]);
 
-            Mouse_LeftPressed = (bool)(Mouse_Bytes[0] & 0b00000001);
-            Mouse_RightPressed = (bool)((Mouse_Bytes[0] & 0b00000010) >> 1);
+            mouse_left_pressed = (bool)(mouse_bytes[0] & 0b00000001);
+            mouse_right_pressed = (bool)((mouse_bytes[0] & 0b00000010) >> 1);
 
-            Mouse_State = 0;
+            mouse_state = 0;
             break;
     }
 
-    Sched_Unlock();
+    sched_unlock();
 }
 
-void Mouse_Init() {
+void mouse_init() {
     u8 data;
-    Mouse_WaitWrite();
+    mouse_wait_write();
     outb(0x64, 0xa8);
-    Mouse_WaitWrite();
+    mouse_wait_write();
     outb(0x64, 0x20);
 
-    Mouse_Read();
+    mouse_read();
     data = (inb(0x60) | 2);
 
-    Mouse_WaitWrite();
+    mouse_wait_write();
     outb(0x64, 0x60);
-    Mouse_WaitWrite();
+    mouse_wait_write();
     outb(0x60, data);
 
-    Mouse_Write(0xf6);
-    Mouse_Read();
-    Mouse_Write(0xf4);
-    Mouse_Read();
+    mouse_write(0xf6);
+    mouse_read();
+    mouse_write(0xf4);
+    mouse_read();
 
-    IRQ_Register(12, Mouse_Handler);
+    irq_register(12, mouse_handler);
 }

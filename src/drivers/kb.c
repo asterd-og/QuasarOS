@@ -3,13 +3,13 @@
 #include <arch/x86_64/cpu/serial.h>
 #include <sched/sched.h>
 
-bool KB_KeyPressed = false;
-char KB_CurrentChar = '\0';
-bool KB_Caps = false;
-bool KB_Shift = false;
+bool kb_key_pressed = false;
+char kb_current_char = '\0';
+bool kb_caps = false;
+bool kb_shift = false;
 
-void KB_Handler(Registers* regs) {
-    Sched_Lock();
+void kb_handler(registers* regs) {
+    sched_lock();
     (void)regs;
 
     u8 key = inb(0x60);
@@ -19,45 +19,45 @@ void KB_Handler(Registers* regs) {
         switch (key) {
             case 0x2a:
                 // Shift
-                KB_Shift = true;
+                kb_shift = true;
                 break;
             case 0x3a:
                 // Caps
-                KB_Caps = !KB_Caps;
+                kb_caps = !kb_caps;
                 break;
             default:
                 // Letter(?)
-                KB_KeyPressed = true;
-                if (KB_Shift) KB_CurrentChar = KB_MapKeysShift[key];
-                else if (KB_Caps) KB_CurrentChar = KB_MapKeysCaps[key];
-                else KB_CurrentChar = KB_MapKeys[key];
+                kb_key_pressed = true;
+                if (kb_shift) kb_current_char = kb_map_keys_shift[key];
+                else if (kb_caps) kb_current_char = kb_map_keys_caps[key];
+                else kb_current_char = kb_map_keys[key];
                 break;
         }
     } else {
         switch (key) {
             case 0xaa:
                 // Shift was released
-                KB_Shift = false;
+                kb_shift = false;
                 break;
         }
     }
 
-    Sched_Unlock();
+    sched_unlock();
 }
 
 
-char KB_GetChar() {
-    Sched_Lock();
-    if (KB_KeyPressed) {
-        KB_KeyPressed = false;
-        Sched_Unlock();
-        return KB_CurrentChar;
+char kb_get_char() {
+    sched_lock();
+    if (kb_key_pressed) {
+        kb_key_pressed = false;
+        sched_unlock();
+        return kb_current_char;
     } else {
-        Sched_Unlock();
+        sched_unlock();
         return '\0';
     }
 }
 
-void KB_Init() {
-    IRQ_Register(1, KB_Handler);
+void kb_init() {
+    irq_register(1, kb_handler);
 }

@@ -1,28 +1,27 @@
 #include <video/vbe.h>
 #include <sched/sched.h>
+#include <initrd/quasfs.h>
 
-volatile struct limine_framebuffer_request FB_Req = {
+volatile struct limine_framebuffer_request fb_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
     .revision = 0
 };
 
-Framebuffer* VBE;
-u32* FB_Addr;
+framebuffer* vbe;
+u32* fb_addr;
+psf2_font* font;
 
-void VBE_Init() {
-    struct limine_framebuffer* FB_Res = FB_Req.response->framebuffers[0];
-    FB_Addr = FB_Res->address;
+void vbe_init() {
+    struct limine_framebuffer* fb_res = fb_request.response->framebuffers[0];
+    fb_addr = fb_res->address;
 
-    VBE = FB_CreateNewFB(0, 0, FB_Res->width, FB_Res->height, FB_Res->pitch);
+    vbe = fb_create_new(0, 0, fb_res->width, fb_res->height, fb_res->pitch);
+    font = psf2_load(quasfs_read("kfont.psf"));
 }
 
-void VBE_Update() {
-    Sched_Lock();
-    for (u32 i = 0; i < VBE->width * VBE->height; i++)
-        FB_Addr[i] = VBE->buffer[i];
-    Sched_Unlock();
-}
-
-u32* VBE_GetAddr() {
-    return FB_Addr;
+void vbe_update() {
+    sched_lock();
+    for (u32 i = 0; i < vbe->width * vbe->height; i++)
+        fb_addr[i] = vbe->buffer[i];
+    sched_unlock();
 }

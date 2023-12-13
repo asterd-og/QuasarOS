@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-static const u8 KB_MapKeys[] = {
+static const u8 kb_map_keys[] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',
     '9', '0', '-', '=', '\b',
     '\t',
@@ -41,7 +41,7 @@ static const u8 KB_MapKeys[] = {
     0
 };
 
-static const u8 KB_MapKeysShift[] = {
+static const u8 kb_map_keys_shift[] = {
     0,  27, '!', '@', '#', '$', '%', '^', '&', '*',
     '(', ')', '_', '+', '\b',
     '\t',
@@ -80,7 +80,7 @@ static const u8 KB_MapKeysShift[] = {
     0
 };
 
-static const u8 KB_MapKeysCaps[] = {
+static const u8 kb_map_keys_caps[] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',
     '9', '0', '-', '=', '\b',
     '\t',

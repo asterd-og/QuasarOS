@@ -4,4 +4,4 @@
 #include <arch/x86_64/tables/idt/idt.h>
 #include <libc/printf.h>
 
-void Syscall_Init();
+void syscall_init();

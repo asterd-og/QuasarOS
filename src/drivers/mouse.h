@@ -5,10 +5,10 @@
 #include <arch/x86_64/tables/idt/idt.h>
 #include <arch/x86_64/io.h>
 
-extern u32 Mouse_X;
-extern u32 Mouse_Y;
+extern u32 mouse_x;
+extern u32 mouse_y;
 
-extern bool Mouse_LeftPressed;
-extern bool Mouse_RightPressed;
+extern bool mouse_left_pressed;
+extern bool mouse_right_pressed;
 
-void Mouse_Init();
+void mouse_init();

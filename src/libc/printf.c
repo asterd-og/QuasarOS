@@ -1389,12 +1389,12 @@ int vfctprintf(void (*out)(char c, void* extra_arg), void* extra_arg, const char
 
 int printf(const char* format, ...)
 {
-  Sched_Lock();
+  sched_lock();
   va_list args;
   va_start(args, format);
   const int ret = vprintf(format, args);
   va_end(args);
-  Sched_Unlock();
+  sched_unlock();
   return ret;
 }
 

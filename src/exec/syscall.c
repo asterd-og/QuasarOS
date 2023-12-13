@@ -11,8 +11,8 @@ Syscalls spec:
     rdx - third arg
 */
 
-void Syscall_Handler(Registers* regs) {
-    Sched_Lock();
+void syscall_handler(registers* regs) {
+    sched_lock();
     switch (regs->rax) {
         case 0x00:
             // puts
@@ -24,28 +24,28 @@ void Syscall_Handler(Registers* regs) {
             break;
         case 0x02:
             // KB Get char
-            regs->rax = KB_GetChar();
+            regs->rax = kb_get_char();
             break;
         case 0x03:
             // List dir initrd
-            regs->rax = (u64)QuasFS_Dir();
+            regs->rax = (u64)quasfs_dir();
             break;
         case 0x04:
             // Get entry count
-            regs->rax = QuasFS_GetEntryCount();
+            regs->rax = quasfs_get_entry_count();
             break;
         case 0x05:
             // Read file
-            regs->rax = (u64)QuasFS_Read((char*)regs->rbx);
+            regs->rax = (u64)quasfs_read((char*)regs->rbx);
             break;
         case 0x06:
             // Start new elf task
-            Sched_CreateNewElf(QuasFS_Read((char*)regs->rbx), (char*)regs->rbx, true);
+            sched_create_new_elf(quasfs_read((char*)regs->rbx), (char*)regs->rbx, true);
             break;
     }
-    Sched_Unlock();
+    sched_unlock();
 }
 
-void Syscall_Init() {
-    IRQ_Register(16, Syscall_Handler);
+void syscall_init() {
+    irq_register(16, syscall_handler);
 }

@@ -3,8 +3,8 @@
 #include <video/fb.h>
 #include <limine.h>
 
-void VBE_Init();
-void VBE_Update();
-u32* VBE_GetAddr();
+void vbe_init();
+void vbe_update();
 
-extern Framebuffer* VBE;
+extern framebuffer* vbe;
+extern psf2_font* font;

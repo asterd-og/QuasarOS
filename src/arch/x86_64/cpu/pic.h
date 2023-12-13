@@ -23,5 +23,5 @@
 
 #define PIC_EOI         0x20
 
-void PIC_Remap();
-void PIC_Eoi(u8 no);
+void pic_remap();
+void pic_eoi(u8 no);

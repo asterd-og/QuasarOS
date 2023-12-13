@@ -1,33 +1,33 @@
 #include <initrd/quasfs.h>
 #include <heap/heap.h>
 
-quasHead* QuasFS_Head;
-char* QuasFS_Addr;
+quasfs_head* quasfs_Head;
+char* quasfs_Addr;
 
-int QuasFS_Init(void* addr) {
-    QuasFS_Addr = (char*)addr;
-    QuasFS_Head = (quasHead*)QuasFS_Addr;
-    if (strcmp(QuasFS_Head->magic, "QUAS")) {
+int quasfs_init(void* addr) {
+    quasfs_Addr = (char*)addr;
+    quasfs_Head = (quasfs_head*)quasfs_Addr;
+    if (strcmp(quasfs_Head->magic, "QUAS")) {
         return 1;
     }
     return 0;
 }
 
-char* QuasFS_Read(const char* name) {
-    quasHdr* hdr;
-    for (u64 i = 0; i < QuasFS_Head->fileCount; i++) {
-        hdr = (quasHdr*)(QuasFS_Addr + (sizeof(quasHead) + (sizeof(quasHdr) * i)));
+char* quasfs_read(const char* name) {
+    quasfs_header* hdr;
+    for (u64 i = 0; i < quasfs_Head->fileCount; i++) {
+        hdr = (quasfs_header*)(quasfs_Addr + (sizeof(quasfs_head) + (sizeof(quasfs_header) * i)));
         if (!strcmp(hdr->name, name)) {
-            return (char*)(QuasFS_Addr + hdr->address);
+            return (char*)(quasfs_Addr + hdr->address);
         }
     }
     return NULL;
 }
 
-size_t QuasFS_FTell(const char* name) {
-    quasHdr* hdr;
-    for (u64 i = 0; i < QuasFS_Head->fileCount; i++) {
-        hdr = (quasHdr*)(QuasFS_Addr + (sizeof(quasHead) + (sizeof(quasHdr) * i)));
+size_t quasfs_ftell(const char* name) {
+    quasfs_header* hdr;
+    for (u64 i = 0; i < quasfs_Head->fileCount; i++) {
+        hdr = (quasfs_header*)(quasfs_Addr + (sizeof(quasfs_head) + (sizeof(quasfs_header) * i)));
         if (!strcmp(hdr->name, name)) {
             return hdr->size;
         }
@@ -35,17 +35,17 @@ size_t QuasFS_FTell(const char* name) {
     return 0;
 }
 
-char** QuasFS_Dir() {
-    quasHdr* hdr;
-    char** res = (char**)Heap_Alloc(sizeof(char) * QuasFS_Head->fileCount);
-    for (u64 i = 0; i < QuasFS_Head->fileCount; i++) {
-        hdr = (quasHdr*)(QuasFS_Addr + (sizeof(quasHead) + (sizeof(quasHdr) * i)));
-        res[i] = (char*)Heap_Alloc(sizeof(char) * 50);
+char** quasfs_dir() {
+    quasfs_header* hdr;
+    char** res = (char**)kmalloc(sizeof(char) * quasfs_Head->fileCount);
+    for (u64 i = 0; i < quasfs_Head->fileCount; i++) {
+        hdr = (quasfs_header*)(quasfs_Addr + (sizeof(quasfs_head) + (sizeof(quasfs_header) * i)));
+        res[i] = (char*)kmalloc(sizeof(char) * 50);
         strcpy(res[i], hdr->name);
     }
     return res;
 }
 
-int QuasFS_GetEntryCount() {
-    return QuasFS_Head->fileCount;
+int quasfs_get_entry_count() {
+    return quasfs_Head->fileCount;
 }

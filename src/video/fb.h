@@ -3,6 +3,7 @@
 #include <types.h>
 #include <limine.h>
 #include <heap/heap.h>
+#include <video/psf2.h>
 
 typedef struct {
     u32 x;
@@ -11,13 +12,18 @@ typedef struct {
     u32 height;
     u16 pitch;
     u32* buffer;
-} Framebuffer;
+} framebuffer;
 
-Framebuffer* FB_CreateNewFB(u32 x, u32 y, u32 width, u32 height, u32 pitch);
+framebuffer* fb_create_new(u32 x, u32 y, u32 width, u32 height, u32 pitch);
 
-void FB_SetPix(Framebuffer* fb, u32 x, u32 y, u32 argb);
-u32 FB_GetPix(Framebuffer* fb, u32 x, u32 y);
+void fb_set_pix(framebuffer* fb, u32 x, u32 y, u32 argb);
+u32 fb_get_pix(framebuffer* fb, u32 x, u32 y);
 
-void FB_CopyFB(Framebuffer* from, Framebuffer* to);
+void fb_copy(framebuffer* from, framebuffer* to);
 
-void FB_Clear(Framebuffer* fb, u32 argb);
+void fb_fill_rect(framebuffer* fb, u32 x, u32 y, u32 width, u32 height, u32 argb);
+
+void fb_draw_char(framebuffer* fb, psf2_font* font, char ch, u32 x, u32 y, u32 argb);
+void fb_draw_string(framebuffer* fb, psf2_font* font, char* str, u32 x, u32 y, u32 argb);
+
+void fb_clear(framebuffer* fb, u32 argb);

@@ -1,50 +1,80 @@
 #include <video/fb.h>
 #include <libc/string.h>
-#include <libc/lock.h>
+#include <sched/sched.h>
 
-static Locker FB_Lock;
-
-Framebuffer* FB_CreateNewFB(u32 x, u32 y,
-    u32 width, u32 height, u32 pitch) {
-    Lock(&FB_Lock);
-    Framebuffer* fb = (Framebuffer*)Heap_Alloc(sizeof(Framebuffer));
-    fb->buffer = (u32*)Heap_Alloc(width * height * 4);
+framebuffer* fb_create_new(u32 x, u32 y, u32 width, u32 height, u32 pitch) {
+    framebuffer* fb = (framebuffer*)kmalloc(sizeof(framebuffer));
+    fb->buffer = (u32*)kmalloc(width * height * 4);
     fb->x = x;
     fb->y = y;
     fb->width = width;
     fb->height = height;
     fb->pitch = pitch;
     memset(fb->buffer, 0, width * height * 4);
-    Unlock(&FB_Lock);
     return fb;
 }
 
-void FB_SetPix(Framebuffer* fb, u32 x, u32 y, u32 argb) {
-    Lock(&FB_Lock);
+void fb_set_pix(framebuffer* fb, u32 x, u32 y, u32 argb) {
+    sched_lock();
     if (x > fb->width || x < 0 || y > fb->height || y < 0) return;
     fb->buffer[y * fb->pitch / 4 + x] = argb;
-    Lock(&FB_Lock);
+    sched_unlock();
 }
 
-u32 FB_GetPix(Framebuffer* fb, u32 x, u32 y) {
-    Lock(&FB_Lock);
-    u32 argb = fb->buffer[y * fb->pitch / 4 + x];
-    Unlock(&FB_Lock);
-    return argb;
+u32 fb_get_pix(framebuffer* fb, u32 x, u32 y) {
+    return fb->buffer[y * fb->pitch / 4 + x];
 }
 
-void FB_CopyFB(Framebuffer* from, Framebuffer* to) {
-    Lock(&FB_Lock);
+void fb_copy(framebuffer* from, framebuffer* to) {
+    sched_lock();
     for (u32 y = 0; y < from->height; y++) {
         for (u32 x = 0; x < from->width; x++) {
-            FB_SetPix(to, x + from->x, y + from->y, FB_GetPix(from, x, y));
+            fb_set_pix(to, x + from->x, y + from->y, fb_get_pix(from, x, y));
         }
     }
-    Unlock(&FB_Lock);
+    sched_unlock();
 }
 
-void FB_Clear(Framebuffer* fb, u32 argb) {
-    Lock(&FB_Lock);
+void fb_fill_rect(framebuffer* fb, u32 x, u32 y, u32 width, u32 height, u32 argb) {
+    sched_lock();
+
+    for (u32 yy = 0; yy < height; yy++) {
+        for (u32 xx = 0; xx < width; xx++) {
+            fb_set_pix(fb, x + xx, y + yy, argb);
+        }
+    }
+
+    sched_unlock();
+}
+
+void fb_draw_char(framebuffer* fb, psf2_font* font, char ch, u32 x, u32 y, u32 argb) {
+    sched_lock();
+
+    u8* c = font->addr_start + ch * font->header->char_size;
+
+    for (u32 yy = 0; yy < font->header->height; yy++) {
+        for (u32 xx = 0; xx < font->header->width; xx++) {
+            if ((c[yy * font->pitch + xx / 8] >> (7 - xx % 8)) & 1) {
+                fb_set_pix(fb, x + xx, y + yy, argb);
+            }
+        }
+    }
+
+    sched_unlock();
+}
+
+void fb_draw_string(framebuffer* fb, psf2_font* font, char* str, u32 x, u32 y, u32 argb) {
+    sched_lock();
+
+    for (int i = 0; i < strlen(str); i++) {
+        fb_draw_char(fb, font, str[i], x + (i * font->header->width), y, argb);
+    }
+
+    sched_unlock();
+}
+
+void fb_clear(framebuffer* fb, u32 argb) {
+    sched_lock();
     for (u32 i = 0; i < fb->width * fb->height; i++) fb->buffer[i] = argb;
-    Unlock(&FB_Lock);
+    sched_unlock();
 }

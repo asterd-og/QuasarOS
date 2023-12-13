@@ -2,10 +2,10 @@
 
 #include <types.h>
 #include <arch/x86_64/tables/idt/idt.h>
-#include <arch/x86_64/mm/vmm.h>
+#include <mm/vmm.h>
 #include <heap/heap.h>
 
-#define Sched_MaxTaskLimit 16
+#define sched_max_task_limit 16
 
 enum {
     STARTING,
@@ -15,28 +15,28 @@ enum {
 
 typedef struct {
     char* name;
-    Registers regs;
+    registers regs;
     u64 TID; // Task ID
     u8 state;
-    VMM_PageMap* pageMap;
-    u64 startTime;
+    page_map* page_map;
+    u64 start_time;
     u64 usage;
     bool killable;
-} __attribute__((packed)) Sched_Task;
+} __attribute__((packed)) sched_task;
 
-extern bool Sched_Paused;
+extern bool sched_paused;
 
-void Sched_Init();
+void sched_init();
 
-Sched_Task* Sched_CreateNewTask(void* addr, char* name, bool killable);
-Sched_Task* Sched_CreateNewElf(char* addr, char* name, bool killable);
+sched_task* sched_create_new_task(void* addr, char* name, bool killable);
+sched_task* sched_create_new_elf(char* addr, char* name, bool killable);
 
-void Sched_QueueTask(Sched_Task* task);
+void sched_queue_task(sched_task* task);
 
-void Sched_KillTask(u64 TID);
-void Sched_RemoveTask(u64 TID);
-u64 Sched_GetCurrentTID();
-void Sched_Schedule(Registers* regs);
+void sched_kill_task(u64 TID);
+void sched_remove_task(u64 TID);
+u64 sched_get_current_TID();
+void sched_switch(registers* regs);
 
-void Sched_Lock();
-void Sched_Unlock();
+void sched_lock();
+void sched_unlock();

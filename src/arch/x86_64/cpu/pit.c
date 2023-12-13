@@ -1,23 +1,22 @@
 #include <arch/x86_64/cpu/pit.h>
 #include <sched/sched.h>
 
-u64 PIT_Tick = 0;
+u64 pit_tick = 0;
 
-void PIT_Sleep(u64 ms) {
-    u64 start = PIT_Tick;
-    while (PIT_Tick < start + ms * (PIT_BaseFreq / 100));
+void pit_sleep(u64 ms) {
+    u64 start = pit_tick;
+    while (pit_tick < start + ms * (pit_base_freq / 100));
 }
 
-void PIT_Handler(Registers* regs) {
-    PIT_Tick++;
-    if (!Sched_Paused)
-        Sched_Schedule(regs);
+void pit_handler(registers* regs) {
+    pit_tick++;
+    sched_switch(regs);
 }
 
-void PIT_Init() {
+void pit_init() {
     outb(0x43, 0x36);
-    u64 div = 1193180 / PIT_BaseFreq;
+    u64 div = 1193180 / pit_base_freq;
     outb(0x40, (u8)div);
     outb(0x40, (u8)(div >> 8));
-    IRQ_Register(0, PIT_Handler);
+    irq_register(0, pit_handler);
 }

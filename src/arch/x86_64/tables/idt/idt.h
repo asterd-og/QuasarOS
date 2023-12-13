@@ -10,14 +10,12 @@ typedef struct {
     u16 mid;
     u32 high;
     u32 resv;
-} __attribute__((packed))
-IDT_Entry;
+} __attribute__((packed)) idt_entry;
 
 typedef struct {
     u16 size;
     u64 offset;
-} __attribute__((packed))
-IDTR;
+} __attribute__((packed)) idtr;
 
 typedef struct {
     u64 r15;
@@ -35,18 +33,15 @@ typedef struct {
     u64 rdx;
     u64 rcx;
     u64 rax;
-    u64 intNo;
-    u64 errCode;
+    u64 int_no;
+    u64 err_code;
     u64 rip;
     u64 cs;
     u64 rflags;
     u64 rsp;
     u64 ss;
-} __attribute__((packed)) Registers;
+} __attribute__((packed)) registers;
 
-void IDT_Init();
-void IRQ_Register(u8 vec, void* pHandler);
-void IRQ_Unregister(u8 vec);
-void IRQ_RegisterSyscall(void* handler);
-void CLI();
-void STI();
+void idt_init();
+void irq_register(u8 vec, void* pHandler);
+void irq_unregister(u8 vec);

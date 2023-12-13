@@ -23,28 +23,28 @@ SECTIONS
     /* that is the beginning of the region. */
     . = 0xffffffff80000000;
 
-    Text_StartAddr = .;
+    text_start = .;
 
     .text : {
         *(.text .text.*)
     } :text
 
-    Text_EndAddr = .;
+    text_end = .;
 
     /* Move to the next memory page for .rodata */
     . += CONSTANT(MAXPAGESIZE);
 
-    Rodata_StartAddr = .;
+    rodata_start = .;
 
     .rodata : {
         *(.rodata .rodata.*)
     } :rodata
 
-    Rodata_EndAddr = .;
+    rodata_end = .;
     /* Move to the next memory page for .data */
     . += CONSTANT(MAXPAGESIZE);
 
-    Data_StartAddr = .;
+    data_start = .;
 
     .data : {
         *(.data .data.*)
@@ -64,7 +64,7 @@ SECTIONS
         *(COMMON)
     } :data
 
-    Data_EndAddr = .;
+    data_end = .;
 
     /* Discard .note.* and .eh_frame since they may cause issues on some hosts. */
     /DISCARD/ : {

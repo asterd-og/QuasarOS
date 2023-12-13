@@ -1,20 +1,15 @@
 #pragma once
 
 #include <types.h>
-#include <arch/x86_64/mm/pmm.h>
-#include <arch/x86_64/mm/vmm.h>
+#include <mm/pmm.h>
+#include <mm/vmm.h>
 
-#define Heap_Magic 0xdeadfacade
+#define HEAP_MAGIC 0xdeadfacade
 
-struct Heap_MemoryBlockHDR {
+typedef struct {
     u64 magic;
-    u64 size;
-};
+    u64 pages;
+} heap_memory_block;
 
-typedef struct Heap_MemoryBlockHDR Heap_MemoryBlockHDR;
-
-int   Heap_Init(uptr startAddr);
-void* Heap_Alloc(u64 size);
-void  Heap_Free(void* ptr);
-void* Heap_PAlloc(u64 size);
-void* Heap_VAlloc(VMM_PageMap* pageMap, u64 size);
+void* kmalloc(size_t size);
+void  kfree(void* ptr);

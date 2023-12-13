@@ -6,10 +6,7 @@
 #include <flanterm/backends/fb.h>
 #include <arch/x86_64/cpu/pic.h>
 #include <arch/x86_64/cpu/pit.h>
-#include <arch/x86_64/mm/pmm.h>
-#include <arch/x86_64/mm/vmm.h>
 #include <flanterm/flanterm.h>
-#include <exec/flat/flat.h>
 #include <kernel/kernel.h>
 #include <drivers/mouse.h>
 #include <initrd/quasfs.h>
@@ -20,13 +17,16 @@
 #include <video/vbe.h>
 #include <heap/heap.h>
 #include <video/fb.h>
+#include <mm/pmm.h>
+#include <mm/vmm.h>
+#include <wm/wm.h>
 
-volatile struct limine_hhdm_request hhdmReq = {
+volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST,
     .revision = 0
 };
 
-struct flanterm_context *Flanterm_Context;
+struct flanterm_context *flanterm_context;
 
 u64 HHDM_Offset;
 
@@ -35,83 +35,58 @@ static volatile struct limine_module_request modReq = {
     .revision = 0
 };
 
-struct limine_file* findModule(int pos) {
+struct limine_file* find_module(int pos) {
     return modReq.response->modules[pos];
 }
 
-Framebuffer* Flanterm_FB;
-
-void task1() {
-    while(1) {
-        printf("a");
-    }
-}
-
-void task2() {
-    while(1) {
-        printf("b");
-    }
-}
-
-void task3() {
-    while(1) {
-        printf("c");
-    }
-}
-
-void task4() {
-    while(1) {
-        printf("d");
+void wm_update() {
+    while (true) {
+        fb_clear(vbe, 0xFF151515);
+        wm_tick();
+        vbe_update();
     }
 }
 
 void _start(void) {
-    HHDM_Offset = hhdmReq.response->offset;
+    HHDM_Offset = hhdm_request.response->offset;
 
-    GDT_Init();
-    Serial_Init();
+    gdt_init();
+    serial_init();
 
     asm ("cli");
-
-    IDT_Init();
-    PIC_Remap();
-
+    idt_init();
+    pic_remap();
     asm ("sti");
-    KB_Init();
 
-    PMM_Init();
-    VMM_Init();
+    mouse_init();
 
-    Heap_Init((uptr)toHigherHalf(PMM_Alloc(1)));
+    pmm_init();
+    vmm_init();
 
-    VBE_Init();
-    Syscall_Init();
+    quasfs_init(find_module(0)->address);
 
-    Flanterm_FB = FB_CreateNewFB(
-        200, 200, 500, 500, VBE->pitch
+    vbe_init();
+    syscall_init();
+    wm_init();
+
+
+    wm_window* window = wm_create_new_window("Window 1", 400, 350);
+    flanterm_context = flanterm_fb_simple_init(
+        window->fb->buffer,
+        window->fb->width, window->fb->height,
+        window->fb->pitch
     );
 
-    Flanterm_Context = flanterm_fb_simple_init(
-        VBE_GetAddr(),
-        VBE->width, VBE->height,
-        VBE->pitch
-    );
+    printf("WM!");
 
-    QuasFS_Init(findModule(0)->address);
-
-    char* addr = QuasFS_Read("shell");
-    if (addr == NULL) {
-        printf("dang");
-    }
-
-    Sched_Init();
-    Sched_QueueTask(Sched_CreateNewElf(addr, "shell", true));
-    PIT_Init();
+    sched_init();
+    sched_queue_task(sched_create_new_task(wm_update, "WM", false));
+    pit_init();
 
     for (;;);
 }
 
 void putchar_(char c) {
     char msg[] = {c, '\0'};
-    flanterm_write(Flanterm_Context, msg, sizeof(msg));
+    flanterm_write(flanterm_context, msg, sizeof(msg));
 }

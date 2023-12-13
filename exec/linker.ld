@@ -4,7 +4,7 @@ OUTPUT_ARCH(i386:x86-64)
 ENTRY(main)
 SECTIONS
 {
-    . = 8M;
+    . = 1M;
     .text BLOCK(4K) : ALIGN(4K)
     {
         *(.text)

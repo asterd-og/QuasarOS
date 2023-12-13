@@ -5,11 +5,11 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-#define divRoundUp(x, y) (x + ( y - 1)) / y
-#define alignUp(x, y) divRoundUp(x, y) * y
-#define alignDown(x, y) (x / y) * y
+#define div_round_up(x, y) (x + ( y - 1)) / y
+#define align_up(x, y) div_round_up(x, y) * y
+#define align_down(x, y) (x / y) * y
 
-#define pageSize 4096
+#define page_size 4096
 
 typedef uint8_t u8;
 typedef uint16_t u16;

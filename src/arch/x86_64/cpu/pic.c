@@ -1,7 +1,7 @@
 #include <arch/x86_64/cpu/pic.h>
 #include <arch/x86_64/io.h>
 
-void PIC_Remap() {
+void pic_remap() {
     // This will start the init sequence in cascade mode
     outb(PIC1_CMD, ICW1_INIT | ICW1_ICW4);
     outb(PIC2_CMD, ICW1_INIT | ICW1_ICW4);
@@ -15,7 +15,7 @@ void PIC_Remap() {
     outb(PIC2_DAT, 0);
 }
 
-void PIC_Eoi(u8 no) {
+void pic_eoi(u8 no) {
     if (no > 7) {
         outb(PIC2_CMD, PIC_EOI);
     }

@@ -1,6 +1,6 @@
 #include <arch/x86_64/tables/gdt/gdt.h>
 
-u64 GDT_Table[] = {
+u64 gdt_table[] = {
     0x0000000000000000,
     
     0x00009a000000ffff, // 16 code
@@ -16,13 +16,13 @@ u64 GDT_Table[] = {
     0x00aff3000000ffff  // 64 usermode data
 };
 
-GDTR GDT_Data;
+gdtr gdt_data;
 
-void GDT_Init() {
-    GDT_Data = (GDTR){
+void gdt_init() {
+    gdt_data = (gdtr){
         .size = (sizeof(u64) * 9) - 1,
-        .offset = (u64)&GDT_Table
+        .offset = (u64)&gdt_table
     };
 
-    asm volatile ("lgdt %0" :: "m"(GDT_Data) : "memory");
+    asm volatile ("lgdt %0" :: "m"(gdt_data) : "memory");
 }

@@ -6,9 +6,6 @@
 extern u64 Kernel_End;
 extern u64 HHDM_Offset;
 
-extern struct flanterm_context *pFtCtx;
+extern volatile struct limine_framebuffer_request fb_request;
 
-extern volatile struct limine_framebuffer_request fbReq;
-extern struct limine_framebuffer_response* pFbRes;
-
-extern volatile struct limine_hhdm_request hhdmReq;
+extern volatile struct limine_hhdm_request hhdm_request;

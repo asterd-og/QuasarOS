@@ -4,7 +4,7 @@
 #include <libc/printf.h>
 #include <sched/sched.h>
 
-int Serial_Init() {
+int serial_init() {
     outb(COM1 + 1, 0);
     outb(COM1 + 3, 0x80);
     outb(COM1, 0x03);
@@ -23,35 +23,31 @@ int Serial_Init() {
     return 0;
 }
 
-int Serial_IsBusEmpty() {
+int serial_is_bus_empty() {
     return inb(COM1 + 5) & 0x20;
 }
 
-void Serial_WriteChar(char a) {
-    while (Serial_IsBusEmpty() == 0);
+void serial_write_char(char a) {
+    while (serial_is_bus_empty() == 0);
     outb(COM1, a);
 }
 
 void Serial_Send(char* pStr) {
     while (*pStr != '\0') {
-        Serial_WriteChar(*pStr++);
+        serial_write_char(*pStr++);
     }
 }
 
-void* doNothing(void* nothing) {
-    return nothing;
+void serial_wrap(char c, void* extra) {
+    (void)extra;
+    serial_write_char(c);
 }
 
-void Serial_Wrap(char c, void* extra) {
-    doNothing(extra);
-    Serial_WriteChar(c);
-}
-
-void Serial_Printf(char* pStr, ...) {
-    Sched_Lock();
+void serial_printf(char* pStr, ...) {
+    sched_lock();
     va_list args;
     va_start(args, pStr);
-    vfctprintf(Serial_Wrap, NULL, pStr, args);
+    vfctprintf(serial_wrap, NULL, pStr, args);
     va_end(args);
-    Sched_Unlock();
+    sched_unlock();
 }

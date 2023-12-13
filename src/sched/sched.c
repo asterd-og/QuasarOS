@@ -5,193 +5,176 @@
 #include <exec/elf/elf.h>
 #include <initrd/quasfs.h>
 
-Sched_Task* Sched_TaskList[Sched_MaxTaskLimit] = {};
-Sched_Task* Sched_CurrentTask = NULL;
-u64 Sched_TID = 0;
-u64 Sched_CTID = 0;
-u64 Sched_Stage = 0;
-u64 Sched_LockCounter = 0;
-u64 Sched_TempTID = 0;
-bool Sched_Started = 0;
-u64 Sched_Carol = 0;
+sched_task* sched_task_list[sched_max_task_limit] = {};
+sched_task* sched_current_task = NULL;
+u64 sched_tid = 0;
+u64 sched_ctid = 0;
 
-bool Sched_Paused = 0;
+Locker sched_atomic_lock;
 
-static Locker Sched_AtomicLock;
-
-void Sched_IdleTask() {
+void sched_idle_task() {
     while(1) {
         asm ("hlt");
     }
 }
 
-void Sched_Init() {
-    Sched_Task* idle = Sched_CreateNewTask(Sched_IdleTask, "Idle", false);
-    Sched_QueueTask(idle);
-    Sched_Started = true;
+void sched_init() {
+    sched_task* idle = sched_create_new_task(sched_idle_task, "Idle", false);
+    sched_queue_task(idle);
 }
 
-void Sched_Wrapper(void* addr) {
+void sched_wrapper(void* addr) {
     ((void(*)())addr)();
-    Sched_CurrentTask->state = DEAD;
+    sched_current_task->state = DEAD;
     while (1) {
         asm ("hlt");
         // We halt, so we wait for this task to be killed.
     }
 }
 
-u64 Sched_GetBootTime() {
+u64 sched_get_boot_time() {
     u64 ret;
     asm volatile("rdtsc" : "=a"(ret));
     return ret;
 }
 
-void Sched_QueueTask(Sched_Task* task) {
-    Sched_Lock();
-    Sched_Paused = 1;
+void sched_queue_task(sched_task* task) {
+    sched_lock();
 
-    Sched_TaskList[Sched_TID] = task;
-    Sched_TID++;
+    sched_task_list[sched_tid] = task;
+    sched_tid++;
 
-    Sched_Paused = 0;
-    Sched_Unlock();
+    sched_unlock();
 }
 
-Sched_Task* Sched_CreateNewTask(void* addr, char* name, bool killable) {
-    Sched_Lock();
+sched_task* sched_create_new_task(void* addr, char* name, bool killable) {
+    sched_lock();
 
-    Sched_Task* task = (Sched_Task*)Heap_Alloc(sizeof(Sched_Task));
-    task->TID = Sched_TID;
+    sched_task* task = (sched_task*)kmalloc(sizeof(sched_task));
+    task->TID = sched_tid;
     task->name = name;
     task->killable = killable;
 
-    char* stack = (char*)Heap_Alloc(0x4000);
+    char* stack = (char*)kmalloc(0x4000);
     memset(stack, 0, 0x4000);
 
-    u64* stackPtr = (u64*)(stack + 0x4000);
+    u64* stack_ptr = (u64*)(stack + 0x4000);
 
-    task->regs.rip = (u64)Sched_Wrapper;
+    task->regs.rip = (u64)sched_wrapper;
     task->regs.rdi = (u64)addr;
     task->regs.cs = 0x28;
     task->regs.ss = 0x10;
     task->regs.rflags = 0x202; // Interrupts enabled + necessary bit
-    task->regs.rsp = (u64)stackPtr;
+    task->regs.rsp = (u64)stack_ptr;
 
-    task->pageMap = PageMap_New();
+    task->page_map = page_map_new();
 
     task->state = RUNNING;
 
-    task->startTime = Sched_GetBootTime();
+    task->start_time = sched_get_boot_time();
 
-    Sched_Unlock();
+    sched_unlock();
 
     return task;
 }
 
-Sched_Task* Sched_CreateNewElf(char* addr, char* name, bool killable) {
-    Sched_Lock();
+sched_task* sched_create_new_elf(char* addr, char* name, bool killable) {
+    sched_lock();
     
-    Sched_Task* task = (Sched_Task*)Heap_VAlloc(PageMap_Kernel, sizeof(Sched_Task));
-    task->TID = Sched_TID;
-    task->name = name;
+    sched_task* task = (sched_task*)kmalloc(sizeof(sched_task));
+    task->TID = sched_tid;
     task->killable = killable;
+    task->name = name;
 
-    task->pageMap = PageMap_New();
+    task->page_map = page_map_new();
 
-    char* stack = (char*)Heap_VAlloc(task->pageMap, 0x4000);
+    char* stack = (char*)vmm_alloc(task->page_map, div_round_up(0x4000 / page_size, page_size), vmm_flag_present | vmm_flag_write);
     memset(stack, 0, 0x4000);
 
-    u64* stackPtr = (u64*)(stack + 0x4000);
+    u64* stack_ptr = (u64*)(stack + 0x4000);
 
-    task->regs.rip = (u64)Sched_Wrapper;
-    task->regs.rdi = ELF_Exec(addr, task->pageMap);
+    task->regs.rip = (u64)sched_wrapper;
+    task->regs.rdi = elf_exec(addr, task->page_map);
     task->regs.cs = 0x28;
     task->regs.ss = 0x10;
     task->regs.rflags = 0x202; // Interrupts enabled + necessary bit
-    task->regs.rsp = (u64)stackPtr;
+    task->regs.rsp = (u64)stack_ptr;
 
     task->state = RUNNING;
     
-    task->startTime = Sched_GetBootTime();
+    task->start_time = sched_get_boot_time();
 
-    Sched_Unlock();
+    sched_unlock();
 
     return task;
 }
 
-void Sched_KillTask(u64 TID) {
-    Sched_Lock();
-    if (Sched_TaskList[TID]->killable) {
+void sched_kill_task(u64 TID) {
+    sched_lock();
+    if (sched_task_list[TID]->killable) {
         // IDLE is unkillable
         printf("killing task %ld\n", TID);
-        Sched_TaskList[TID]->state = DEAD;
+        sched_task_list[TID]->state = DEAD;
     }
-    Sched_Unlock();
+    sched_unlock();
 }
 
-void Sched_RemoveTask(u64 TID) {
-    Sched_Lock();
+void sched_remove_task(u64 TID) {
+    sched_lock();
     
-    PageMap_Delete(Sched_TaskList[TID]->pageMap);
-    Heap_Free((void*)((u64*)(Sched_TaskList[TID]->regs.rsp - 0x4000)));
-    Heap_Free(Sched_TaskList[TID]);
+    page_map_delete(sched_task_list[TID]->page_map);
+    kfree((void*)((u64*)(sched_task_list[TID]->regs.rsp - 0x4000)));
+    kfree(sched_task_list[TID]);
 
     // Re-arrange the task list to account for the dead task
-    Sched_TaskList[TID] = NULL;
+    sched_task_list[TID] = NULL;
 
-    if (TID != Sched_TID) {
-        for (u64 i = TID; i < Sched_TID; i++) {
-            Sched_TaskList[i] = Sched_TaskList[i + 1];
+    if (TID != sched_tid) {
+        for (u64 i = TID; i < sched_tid; i++) {
+            sched_task_list[i] = sched_task_list[i + 1];
         }
     }
 
-    Sched_TID--;
+    sched_tid--;
 
-    Sched_Unlock();
+    sched_unlock();
 }
 
-u64 Sched_GetCurrentTID() {
-    return Sched_CTID;
+u64 sched_get_current_tid() {
+    return sched_ctid;
 }
 
-void Sched_Schedule(Registers* regs) {
-    if (Sched_Paused) {
-        while (Sched_Paused) asm("nop");
-        return;
-    }
-
-    if (Sched_CurrentTask != NULL) {
-        if (Sched_CurrentTask->state == DEAD) {
-            Sched_RemoveTask(Sched_CurrentTask->TID);
-            Sched_CurrentTask = NULL;
-            Sched_CTID = 0;
+void sched_switch(registers* regs) {
+    if (sched_current_task != NULL) {
+        if (sched_current_task->state == DEAD) {
+            sched_remove_task(sched_current_task->TID);
+            sched_current_task = NULL;
+            sched_ctid = 0;
             return;
         }
 
-        Sched_CurrentTask->usage = Sched_GetBootTime() - Sched_CurrentTask->startTime;
-        Sched_CurrentTask->regs = *regs;
+        sched_current_task->usage = sched_get_boot_time() - sched_current_task->start_time;
+        sched_current_task->regs = *regs;
     }
 
-    Sched_CurrentTask = Sched_TaskList[Sched_CTID];
+    sched_current_task = sched_task_list[sched_ctid];
 
-    if (Sched_CurrentTask->state == RUNNING) {
-        PageMap_Load(Sched_CurrentTask->pageMap);
-        *regs = Sched_CurrentTask->regs;
-        Sched_CurrentTask->startTime = Sched_GetBootTime();
+    if (sched_current_task->state == RUNNING) {
+        page_map_load(sched_current_task->page_map);
+        *regs = sched_current_task->regs;
+        sched_current_task->start_time = sched_get_boot_time();
     }
 
-    Sched_CTID++;
-    if (Sched_CTID == Sched_TID) {
-        Sched_CTID = 0;
+    sched_ctid++;
+    if (sched_ctid == sched_tid) {
+        sched_ctid = 0;
     }
 }
 
-void Sched_Lock() {
-    Sched_Paused = true;
-    Lock(&Sched_AtomicLock);
+void sched_lock() {
+    lock(&sched_atomic_lock);
 }
 
-void Sched_Unlock() {
-    Unlock(&Sched_AtomicLock);
-    Sched_Paused = false;
+void sched_unlock() {
+    unlock(&sched_atomic_lock);
 }

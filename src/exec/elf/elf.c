@@ -1,24 +1,24 @@
 #include <exec/elf/elf.h>
 
-u64 ELF_Exec(char* addr, VMM_PageMap* pageMap) {
-    ELF_Header* hdr = (ELF_Header*)addr;
+u64 elf_exec(char* addr, page_map* page_map) {
+    elf_header* hdr = (elf_header*)addr;
 
     if (hdr->magic[0] != 0x7f || hdr->magic[1] != 'E' ||
         hdr->magic[2] != 'L' || hdr->magic[3] != 'F') {
-            Serial_Printf("Invalid ELF Header!\n");
+            serial_printf("Invalid ELF Header!\n");
             return 0;
         }
     
     if (hdr->type != 2) {
-        Serial_Printf("ELF Not executable!\n");
+        serial_printf("ELF Not executable!\n");
         return 0;
     }
 
-    ELF_ProgramHeader* pHdr = (ELF_ProgramHeader*)((char*)addr + hdr->phoff);
-    for (u64 i = 0; i < hdr->entryPhCount; i++, pHdr++) {
-        if (pHdr->type == ELF_PHDRLoad) {
-            VMM_AllocMapPages(pageMap, alignUp(pHdr->memSize / pageSize, pageSize), pHdr->vaddr, VMM_FlagPresent | VMM_FlagExec | VMM_FlagWrite);
-            memcpy((void*)pHdr->vaddr, (void*)addr + pHdr->offset, pHdr->fileSize);
+    elf_program_header* phdr = (elf_program_header*)((char*)addr + hdr->phoff);
+    for (u64 i = 0; i < hdr->entry_PHCount; i++, phdr++) {
+        if (phdr->type == ELF_LOAD) {
+            vmm_alloc_map_pages(page_map, align_up(phdr->mem_size / page_size, page_size), phdr->vaddr, vmm_flag_present | vmm_flag_exec | vmm_flag_write);
+            memcpy((void*)phdr->vaddr, (void*)addr + phdr->offset, phdr->file_size);
         }
     }
 

@@ -5,7 +5,6 @@
 typedef struct {
     u16 size;
     u64 offset;
-} __attribute__((packed))
-GDTR;
+} __attribute__((packed)) gdtr;
 
-void GDT_Init();
+void gdt_init();
