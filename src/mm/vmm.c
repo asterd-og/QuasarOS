@@ -79,6 +79,7 @@ void* vmm_alloc(page_map* page_map, u64 pages, uptr flags) {
         virt = addr + (i * page_size);
         phys = addr + (i * page_size);
         vmm_map(page_map, phys, virt, flags);
+        vmm_map(page_map, phys, (uptr)to_higher_half(virt), flags);
     }
 
     return (void*)addr;
@@ -95,9 +96,9 @@ void* vmm_free(page_map* page_map, void* ptr, u64 pages) {
 }
 
 page_map* page_map_new() {
-    void* addr = pmm_alloc(1);
-    page_map* pm = (page_map*)to_higher_half(addr);
-    memset(pm, 0, page_size);
+    void* addr = to_higher_half(pmm_alloc(1));
+    page_map* pm = (page_map*)addr;
+    memset(addr, 0, page_size);
 
     // Create a new page map and copy contents of kernel page map to new one
     for (u64 i = 256; i < 512; i++) {

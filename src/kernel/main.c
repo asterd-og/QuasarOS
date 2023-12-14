@@ -43,6 +43,7 @@ void wm_update() {
     while (true) {
         fb_clear(vbe, 0xFF151515);
         wm_tick();
+        wm_draw_cursor();
         vbe_update();
     }
 }
@@ -58,8 +59,6 @@ void _start(void) {
     pic_remap();
     asm ("sti");
 
-    mouse_init();
-
     pmm_init();
     vmm_init();
 
@@ -67,8 +66,9 @@ void _start(void) {
 
     vbe_init();
     syscall_init();
+    mouse_init();
+    kb_init();
     wm_init();
-
 
     wm_window* window = wm_create_new_window("Window 1", 400, 350);
     flanterm_context = flanterm_fb_simple_init(
