@@ -1,5 +1,6 @@
 #include <video/fb.h>
 #include <libc/string.h>
+#include <libc/printf.h>
 #include <sched/sched.h>
 
 framebuffer* fb_create_new(u32 x, u32 y, u32 width, u32 height, u32 pitch) {

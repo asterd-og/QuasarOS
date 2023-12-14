@@ -70,17 +70,18 @@ void _start(void) {
     kb_init();
     wm_init();
 
-    wm_window* window = wm_create_new_window("Window 1", 400, 350);
+    wm_window* window = wm_create_new_window("Terminal", 600, 400);
     flanterm_context = flanterm_fb_simple_init(
         window->fb->buffer,
-        window->fb->width, window->fb->height,
+        (size_t)window->fb->width, (size_t)window->fb->height,
         window->fb->pitch
     );
 
-    printf("WM!");
+    char* shell = quasfs_read("shell");
 
     sched_init();
     sched_queue_task(sched_create_new_task(wm_update, "WM", false));
+    sched_queue_task(sched_create_new_elf(shell, "shell", true));
     pit_init();
 
     for (;;);

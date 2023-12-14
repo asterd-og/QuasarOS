@@ -21,7 +21,11 @@ int main() {
                 i = 0;
                 puts("> ");
             } else if (ch == '\b') {
-                puts("\b \b");
+                if (i > 0) {
+                    puts("\b \b");
+                    i--;
+                    str[i] = 0;
+                }
             } else {
                 putf("%c", ch);
                 str[i] = ch;
@@ -52,7 +56,7 @@ char** dir() {
     return ret;
 }
 
-int getEntries() {
+int get_entries() {
     int ret;
     syscall(4, 0, 0);
     asm("":"=a"(ret)::);
@@ -66,8 +70,22 @@ char* read(char* name) {
     return ret;
 }
 
-void newElf(char* name) {
-    syscall(6, name, 0);
+int sched_get_tid() {
+    int ret;
+    syscall(7, 0, 0);
+    asm("":"=a"(ret)::);
+}
+
+uint64_t sched_get_usage(int tid) {
+    uint64_t ret;
+    syscall(8, tid, 0);
+    asm("":"=a"(ret)::);
+}
+
+char* sched_get_name(int tid) {
+    char* ret;
+    syscall(9, tid, 0);
+    asm("":"=a"(ret)::);
 }
 
 int strlen(const char* pStr) {
@@ -97,10 +115,12 @@ struct commandStruct {
 
 void CmdHelp(void);
 void CmdLs(void);
+void CmdTop(void);
 
 const struct commandStruct commands[] = {
     {"help", &CmdHelp, "Help menu."},
     {"ls", &CmdLs, "Lists the directory."},
+    {"top", &CmdTop, "Lists the running tasks."},
     {"",0,""}
 };
 
@@ -116,28 +136,32 @@ void CmdHandler(char * cmd)
         }
         i++;
     }
-    if (read(cmd) == NULL) {
-        putf("No matching program for '%s'\n", cmd);
-    }
-    newElf(cmd);
-    while(1);
+    putf("No matching program for '%s'.\n", cmd);
 }
 
 void CmdLs() {
     char** dir_ = dir();
-    for (int i = 0; i < getEntries(); i++) {
+    for (int i = 0; i < get_entries(); i++) {
         putf("%s ", dir_[i]);
     }
     puts("\n");
 }
 
 void CmdHelp() {
-    puts("QuasarOS Shell program. Version 0.1. Running inside an ELF file.\n");
+    puts("QuasarOS Shell program. Version 0.1. Running inside an ELF file.\n\n");
     int i = 0;
     while(commands[i].execute > 0)
     {
         putf("%s - ", commands[i].name);
         putf("%s\n", commands[i].help);
         i++;
+    }
+}
+
+void CmdTop() {
+    for (int i = 0; i < sched_get_tid(); i++) {
+        putf("Task %d ", i);
+        putf("'%s' - Usage: ", sched_get_name(i));
+        putf("%ld%%\n", sched_get_usage(i));
     }
 }

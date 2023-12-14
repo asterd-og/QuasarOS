@@ -1400,10 +1400,12 @@ int printf(const char* format, ...)
 
 int sprintf(char* s, const char* format, ...)
 {
+  sched_lock();
   va_list args;
   va_start(args, format);
   const int ret = vsprintf(s, format, args);
   va_end(args);
+  sched_unlock();
   return ret;
 }
 

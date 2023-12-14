@@ -42,6 +42,18 @@ void syscall_handler(registers* regs) {
             // Start new elf task
             sched_create_new_elf(quasfs_read((char*)regs->rbx), (char*)regs->rbx, true);
             break;
+        case 0x07:
+            // Get sched tid
+            regs->rax = sched_get_tid();
+            break;
+        case 0x08:
+            // Get task usage
+            regs->rax = sched_task_get_usage(regs->rbx);
+            break;
+        case 0x09:
+            // Get task name
+            regs->rax = (u64)sched_task_get_name(regs->rbx);
+            break;
     }
     sched_unlock();
 }

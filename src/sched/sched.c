@@ -35,7 +35,7 @@ void sched_wrapper(void* addr) {
 u64 sched_get_boot_time() {
     u64 ret;
     asm volatile("rdtsc" : "=a"(ret));
-    return ret;
+    return ret / 1000000;
 }
 
 void sched_queue_task(sched_task* task) {
@@ -144,6 +144,18 @@ u64 sched_get_current_tid() {
     return sched_ctid;
 }
 
+u64 sched_get_tid() {
+    return sched_tid;
+}
+
+u64 sched_task_get_usage(u64 tid) {
+    return sched_get_boot_time() - sched_task_list[tid]->start_time;
+}
+
+char* sched_task_get_name(u64 tid) {
+    return sched_task_list[tid]->name;
+}
+
 void sched_switch(registers* regs) {
     if (sched_current_task != NULL) {
         if (sched_current_task->state == DEAD) {
@@ -153,7 +165,6 @@ void sched_switch(registers* regs) {
             return;
         }
 
-        sched_current_task->usage = sched_get_boot_time() - sched_current_task->start_time;
         sched_current_task->regs = *regs;
     }
 
@@ -162,7 +173,6 @@ void sched_switch(registers* regs) {
     if (sched_current_task->state == RUNNING) {
         page_map_load(sched_current_task->page_map);
         *regs = sched_current_task->regs;
-        sched_current_task->start_time = sched_get_boot_time();
     }
 
     sched_ctid++;
