@@ -20,6 +20,8 @@ typedef struct {
     u8 state;
     page_map* page_map;
     u64 start_time;
+    u64 end_time;
+    u64 usage;
     bool killable;
 } __attribute__((packed)) sched_task;
 

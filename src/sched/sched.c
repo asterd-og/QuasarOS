@@ -9,6 +9,7 @@ sched_task* sched_task_list[sched_max_task_limit] = {};
 sched_task* sched_current_task = NULL;
 u64 sched_tid = 0;
 u64 sched_ctid = 0;
+u64 initial_time = 0;
 
 Locker sched_atomic_lock;
 
@@ -18,7 +19,14 @@ void sched_idle_task() {
     }
 }
 
+u64 sched_get_boot_time() {
+    u64 ret;
+    asm volatile("rdtsc" : "=a"(ret));
+    return ret / 1000000;
+}
+
 void sched_init() {
+    initial_time = sched_get_boot_time();
     sched_task* idle = sched_create_new_task(sched_idle_task, "Idle", false);
     sched_queue_task(idle);
 }
@@ -30,12 +38,6 @@ void sched_wrapper(void* addr) {
         asm ("hlt");
         // We halt, so we wait for this task to be killed.
     }
-}
-
-u64 sched_get_boot_time() {
-    u64 ret;
-    asm volatile("rdtsc" : "=a"(ret));
-    return ret / 1000000;
 }
 
 void sched_queue_task(sched_task* task) {
@@ -149,7 +151,7 @@ u64 sched_get_tid() {
 }
 
 u64 sched_task_get_usage(u64 tid) {
-    return sched_get_boot_time() - sched_task_list[tid]->start_time;
+    return sched_task_list[tid]->usage;
 }
 
 char* sched_task_get_name(u64 tid) {

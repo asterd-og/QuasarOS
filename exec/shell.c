@@ -70,6 +70,10 @@ char* read(char* name) {
     return ret;
 }
 
+void run_elf(char* name) {
+    syscall(6, name, 0);
+}
+
 int sched_get_tid() {
     int ret;
     syscall(7, 0, 0);
@@ -136,7 +140,11 @@ void CmdHandler(char * cmd)
         }
         i++;
     }
-    putf("No matching program for '%s'.\n", cmd);
+    if (read(cmd) != NULL) {
+        run_elf(cmd);
+    } else {
+        putf("No matching program for '%s'.\n", cmd);
+    }
 }
 
 void CmdLs() {
