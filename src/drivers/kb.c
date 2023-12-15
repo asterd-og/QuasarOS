@@ -47,13 +47,10 @@ void kb_handler(registers* regs) {
 
 
 char kb_get_char() {
-    sched_lock();
     if (kb_key_pressed) {
         kb_key_pressed = false;
-        sched_unlock();
         return kb_current_char;
     } else {
-        sched_unlock();
         return '\0';
     }
 }

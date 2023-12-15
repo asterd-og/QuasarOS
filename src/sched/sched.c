@@ -59,8 +59,6 @@ void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
     page_map_load(page_map_kernel);
 
     task->regs.rsp = (u64)(stack + STACK_SIZE); // RSP has to be the stack top.
-    
-    sched_list_current = sched_list_head;
 
     serial_printf("Created task '%s'\n", name);
 }
