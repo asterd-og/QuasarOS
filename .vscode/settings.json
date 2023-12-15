@@ -20,6 +20,7 @@
         "stddef.h": "c",
         "wm.h": "c",
         "heap.h": "c",
-        "psf2.h": "c"
+        "psf2.h": "c",
+        "lock.h": "c"
     }
 }

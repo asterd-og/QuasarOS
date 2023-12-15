@@ -79,9 +79,9 @@ void _start(void) {
 
     char* shell = quasfs_read("shell");
 
+    sched_create_new_task(wm_update, "wm", true, false);
+    sched_create_new_task(shell, "shell", true, true);
     sched_init();
-    sched_queue_task(sched_create_new_task(wm_update, "WM", false));
-    sched_queue_task(sched_create_new_elf(shell, "shell", true));
     pit_init();
 
     for (;;);

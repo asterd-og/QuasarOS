@@ -5,7 +5,8 @@
 #include <mm/vmm.h>
 #include <heap/heap.h>
 
-#define sched_max_task_limit 16
+#define STACK_SIZE 0x4000
+#define SCHED_MAX_TASK 16
 
 enum {
     STARTING,
@@ -13,35 +14,23 @@ enum {
     DEAD
 };
 
-typedef struct {
+struct sched_task {
     char* name;
-    registers regs;
-    u64 TID; // Task ID
-    u8 state;
     page_map* page_map;
-    u64 start_time;
-    u64 end_time;
-    u64 usage;
+    registers regs;
+    u64 id;
+    u8 state;
     bool killable;
-} __attribute__((packed)) sched_task;
+    struct sched_task* next;
+};
 
-extern bool sched_paused;
-extern sched_task* sched_task_list[sched_max_task_limit];
+typedef struct sched_task sched_task;
 
 void sched_init();
 
-sched_task* sched_create_new_task(void* addr, char* name, bool killable);
-sched_task* sched_create_new_elf(char* addr, char* name, bool killable);
+sched_task* sched_create_new_task(void* addr, char* name, bool killable, bool elf);
 
-void sched_queue_task(sched_task* task);
-
-void sched_kill_task(u64 TID);
-void sched_remove_task(u64 TID);
-u64 sched_get_current_tid();
 void sched_switch(registers* regs);
-u64 sched_get_tid();
-u64 sched_task_get_usage(u64 tid);
-char* sched_task_get_name(u64 tid);
 
 void sched_lock();
 void sched_unlock();
