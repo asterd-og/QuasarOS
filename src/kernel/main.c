@@ -39,6 +39,14 @@ struct limine_file* find_module(int pos) {
     return modReq.response->modules[pos];
 }
 
+int i = 0;
+
+void kernel_idle() {
+    while (1) {
+        asm ("hlt");
+    }
+}
+
 void wm_update() {
     while (true) {
         fb_clear(vbe, 0xFF151515);
@@ -66,23 +74,21 @@ void _start(void) {
 
     vbe_init();
     syscall_init();
-    mouse_init();
     kb_init();
-    wm_init();
 
-    wm_window* window = wm_create_new_window("Terminal", 600, 400);
     flanterm_context = flanterm_fb_simple_init(
-        window->fb->buffer,
-        (size_t)window->fb->width, (size_t)window->fb->height,
-        window->fb->pitch
+        vbe_addr,
+        (size_t)vbe->width, (size_t)vbe->height,
+        (size_t)vbe->pitch
     );
 
     char* shell = quasfs_read("shell");
 
-    sched_create_new_task(wm_update, "wm", true, false);
+    sched_create_new_task(kernel_idle, "idle", false, false);
     sched_create_new_task(shell, "shell", true, true);
     sched_init();
     pit_init();
+
 
     for (;;);
 }

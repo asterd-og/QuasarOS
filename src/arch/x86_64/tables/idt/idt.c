@@ -1,6 +1,7 @@
 #include <arch/x86_64/tables/idt/idt.h>
 #include <arch/x86_64/cpu/serial.h>
 #include <arch/x86_64/cpu/pic.h>
+#include <mm/vmm.h>
 
 __attribute__((aligned(0x10)))
 static idt_entry idt_entries[256];
@@ -81,6 +82,9 @@ void isr_handler(registers* regs) {
     asm volatile("cli");
 
     serial_printf("\nUh oh!\nSomething went wrong: %s\n", idt_msg[regs->int_no]);
+    if (regs->int_no == 14) {
+        serial_printf("Page Map: 0x%lx\n", read_cr3());
+    }
 
     for (;;)asm volatile("hlt");
 }

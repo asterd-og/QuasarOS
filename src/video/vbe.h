@@ -8,3 +8,4 @@ void vbe_update();
 
 extern framebuffer* vbe;
 extern psf2_font* font;
+extern u32* vbe_addr;

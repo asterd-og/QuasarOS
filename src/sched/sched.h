@@ -14,21 +14,25 @@ enum {
     DEAD
 };
 
-struct sched_task {
+typedef struct {
     char* name;
     page_map* page_map;
     registers regs;
     u64 id;
     u8 state;
     bool killable;
-    struct sched_task* next;
+} sched_task;
+
+struct sched_list {
+    sched_task* data;
+    struct sched_list* next;
 };
 
-typedef struct sched_task sched_task;
+typedef struct sched_list sched_list;
 
 void sched_init();
 
-sched_task* sched_create_new_task(void* addr, char* name, bool killable, bool elf);
+void sched_create_new_task(void* addr, char* name, bool killable, bool elf);
 
 void sched_switch(registers* regs);
 

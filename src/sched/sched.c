@@ -5,8 +5,8 @@
 #include <exec/elf/elf.h>
 #include <initrd/quasfs.h>
 
-sched_task* sched_list[SCHED_MAX_TASK];
-sched_task* sched_current_task = NULL;
+sched_list* sched_list_head;
+sched_list* sched_list_current;
 u64 sched_tid = 0;
 u64 sched_cid = 0;
 
@@ -17,17 +17,30 @@ void sched_init() {
     running = true;
 }
 
-sched_task* sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
-    sched_lock();
+void sched_wrapper(void* addr) {
+    ((void(*)())addr)();
+    sched_list_current->data->state = DEAD;
+    while (1) {
+        asm ("hlt");
+        // We halt, so we wait for this task to be killed.
+    }
+}
+
+void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
+    page_map_load(page_map_kernel);
 
     sched_task* task = (sched_task*)kmalloc(sizeof(sched_task));
 
     task->name = name;
     task->page_map = page_map_new();
+    serial_printf("%s's page map is: 0x%lx\n", name, to_physical(task->page_map));
     task->id = sched_tid;
     task->state = RUNNING;
     task->killable = killable;
-    sched_list[sched_tid] = task;
+    sched_list* node = (sched_list*)kmalloc(sizeof(sched_list));
+    node->data = task;
+    node->next = sched_list_head;
+    sched_list_head = node;
     sched_tid++;
 
     // Set up registers.
@@ -40,29 +53,35 @@ sched_task* sched_create_new_task(void* addr, char* name, bool killable, bool el
     
     // Create stack
 
-    char* stack = (char*)kmalloc(STACK_SIZE);
+    char* stack = (char*)vmm_alloc(task->page_map, align_up(STACK_SIZE, page_size) / page_size, vmm_flag_present | vmm_flag_write);
+    page_map_load(task->page_map);
     memset(stack, 0, STACK_SIZE);
+    page_map_load(page_map_kernel);
 
     task->regs.rsp = (u64)(stack + STACK_SIZE); // RSP has to be the stack top.
+    
+    sched_list_current = sched_list_head;
 
-    sched_unlock();
-
-    return task;
+    serial_printf("Created task '%s'\n", name);
 }
 
-void sched_switch(registers* regs) {
-    if (!running) return;
-    if (sched_current_task) {
-        sched_current_task->regs = *regs;
-    }
-    sched_current_task = sched_list[sched_cid];
-    *regs = sched_current_task->regs;
-    page_map_load(sched_current_task->page_map);
+bool sched_stage = false;
 
-    sched_cid++;
-    if (sched_cid == sched_tid) {
-        sched_cid = 0;
+void sched_switch(registers* regs) {
+    sched_lock();
+    if (sched_stage == false) {
+        page_map_load(sched_list_current->data->page_map);
+        *regs = sched_list_current->data->regs;
+        sched_stage = true;
+    } else {
+        sched_list_current->data->regs = *regs;
+        sched_list_current = sched_list_current->next;
+        if (sched_list_current == NULL) {
+            sched_list_current = sched_list_head;
+        }
+        sched_stage = false;
     }
+    sched_unlock();
 }
 
 void sched_lock() {

@@ -22,10 +22,10 @@ void write_cr3(u64 val) {
     asm volatile("mov %0, %%cr3" :: "r"(val) : "memory");
 }
 
-void* read_cr3() {
+u64 read_cr3() {
     u64 val;
     asm volatile("mov %%cr3, %0" :"=r"(val) :: "memory");
-    return to_higher_half(val);
+    return val;
 }
 
 uptr* page_map_walk_entry(uptr* directory, uptr entry, uptr flags, bool alloc_if_null) {
@@ -71,6 +71,7 @@ void* vmm_alloc_map_pages(page_map* page_map, u64 pages, uptr vaddr, uptr flags)
 void* vmm_alloc(page_map* page_map, u64 pages, uptr flags) {
     uptr addr = (uptr)pmm_alloc(pages);
     addr = align_down(addr, page_size);
+    serial_printf("allocated vmm at %lx\n", addr);
     
     uptr virt;
     uptr phys;
@@ -78,11 +79,10 @@ void* vmm_alloc(page_map* page_map, u64 pages, uptr flags) {
     for (u64 i = 0; i < pages; i++) {
         virt = addr + (i * page_size);
         phys = addr + (i * page_size);
-        vmm_map(page_map, phys, virt, flags);
         vmm_map(page_map, phys, (uptr)to_higher_half(virt), flags);
     }
 
-    return (void*)addr;
+    return (void*)to_higher_half(addr);
 }
 
 void* vmm_free(page_map* page_map, void* ptr, u64 pages) {
@@ -96,9 +96,8 @@ void* vmm_free(page_map* page_map, void* ptr, u64 pages) {
 }
 
 page_map* page_map_new() {
-    void* addr = to_higher_half(pmm_alloc(1));
-    page_map* pm = (page_map*)addr;
-    memset(addr, 0, page_size);
+    page_map* pm = (page_map*)vmm_alloc(page_map_kernel, 1, vmm_flag_present | vmm_flag_write);
+    memset(pm, 0, page_size);
 
     // Create a new page map and copy contents of kernel page map to new one
     for (u64 i = 256; i < 512; i++) {
@@ -118,7 +117,7 @@ page_map* page_map_new() {
         }
     }
 
-    for (u64 i = 0; i < kernel_size; i += page_size) {
+    for (u64 i = 0; i < align_up(kernel_size, page_size); i += page_size) {
         vmm_map(pm, phys_base + i, virt_base + i, vmm_flag_present | vmm_flag_write);
     }
 
@@ -184,6 +183,7 @@ void page_map_load(page_map* page_map) {
 void vmm_init() {
     page_map_kernel = (page_map*)to_higher_half(pmm_alloc(1));
     memset(page_map_kernel, 0, page_size);
+    serial_printf("kernel's page map is: 0x%lx\n", to_physical(page_map_kernel));
 
     kernel_size = kernel_file_request.response->kernel_file->size;
     phys_base = kernel_address_request.response->physical_base;

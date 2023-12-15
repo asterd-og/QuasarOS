@@ -25,6 +25,8 @@ extern symbol rodata_end;
 extern symbol data_start;
 extern symbol data_end;
 
+u64 read_cr3();
+
 void vmm_init();
 void* vmm_alloc_map_pages(page_map* page_map, u64 pages, uptr vaddr, uptr flags);
 void* vmm_alloc(page_map* page_map, u64 pages, uptr flags);

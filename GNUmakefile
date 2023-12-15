@@ -26,13 +26,17 @@ override DEFAULT_HOST_LIBS :=
 $(eval $(call DEFAULT_VAR,HOST_LIBS,$(DEFAULT_HOST_LIBS)))
 
 .PHONY: all
-all: $(IMAGE_NAME).iso kvmRun clean
+all: $(IMAGE_NAME).iso run clean
 
 .PHONY: all-hdd
 all-hdd: $(IMAGE_NAME).hdd
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
+	qemu-system-x86_64 -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio
+
+.PHONY: debugRun
+debugRun: $(IMAGE_NAME).iso
 	qemu-system-x86_64 -s -M q35 -d int -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio
 
 .PHONY: kvmRun

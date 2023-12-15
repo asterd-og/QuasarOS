@@ -2,6 +2,7 @@
 #include <initrd/quasfs.h>
 #include <sched/sched.h>
 #include <drivers/kb.h>
+#include <arch/x86_64/cpu/pit.h>
 
 /*
 Syscalls spec:
