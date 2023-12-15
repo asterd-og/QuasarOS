@@ -52,9 +52,6 @@ void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
     // Create stack
 
     char* stack = (char*)vmm_alloc(task->page_map, align_up(STACK_SIZE, page_size) / page_size, vmm_flag_present | vmm_flag_write);
-    page_map_load(task->page_map);
-    memset(stack, 0, STACK_SIZE);
-    page_map_load(page_map_kernel);
 
     task->regs.rsp = (u64)(stack + STACK_SIZE); // RSP has to be the stack top.
 
