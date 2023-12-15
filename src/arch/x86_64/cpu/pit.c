@@ -2,7 +2,6 @@
 #include <sched/sched.h>
 
 u64 pit_tick = 0;
-registers* kernel_ctx;
 
 void pit_sleep(u64 ms) {
     u64 start = pit_tick;
@@ -10,9 +9,6 @@ void pit_sleep(u64 ms) {
 }
 
 void pit_handler(registers* regs) {
-    if (pit_tick == 0) {
-        kernel_ctx = regs;
-    }
     pit_tick++;
     sched_switch(regs);
 }

@@ -23,13 +23,6 @@ typedef struct {
     bool killable;
 } sched_task;
 
-struct sched_list {
-    sched_task* data;
-    struct sched_list* next;
-};
-
-typedef struct sched_list sched_list;
-
 void sched_init();
 
 void sched_create_new_task(void* addr, char* name, bool killable, bool elf);

@@ -5,8 +5,8 @@
 #include <exec/elf/elf.h>
 #include <initrd/quasfs.h>
 
-sched_list* sched_list_head;
-sched_list* sched_list_current;
+sched_task* sched_list[SCHED_MAX_TASK];
+sched_task* sched_current_task = NULL;
 u64 sched_tid = 0;
 u64 sched_cid = 0;
 
@@ -19,7 +19,7 @@ void sched_init() {
 
 void sched_wrapper(void* addr) {
     ((void(*)())addr)();
-    sched_list_current->data->state = DEAD;
+    sched_list[sched_cid]->state = DEAD;
     while (1) {
         asm ("hlt");
         // We halt, so we wait for this task to be killed.
@@ -37,10 +37,8 @@ void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
     task->id = sched_tid;
     task->state = RUNNING;
     task->killable = killable;
-    sched_list* node = (sched_list*)kmalloc(sizeof(sched_list));
-    node->data = task;
-    node->next = sched_list_head;
-    sched_list_head = node;
+    sched_list[sched_tid] = task;
+    
     sched_tid++;
 
     // Set up registers.
@@ -63,23 +61,18 @@ void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
     serial_printf("Created task '%s'\n", name);
 }
 
-bool sched_stage = false;
-
 void sched_switch(registers* regs) {
-    sched_lock();
-    if (sched_stage == false) {
-        page_map_load(sched_list_current->data->page_map);
-        *regs = sched_list_current->data->regs;
-        sched_stage = true;
-    } else {
-        sched_list_current->data->regs = *regs;
-        sched_list_current = sched_list_current->next;
-        if (sched_list_current == NULL) {
-            sched_list_current = sched_list_head;
-        }
-        sched_stage = false;
+    if (sched_current_task) {
+        sched_current_task->regs = *regs;
     }
-    sched_unlock();
+    sched_current_task = sched_list[sched_cid];
+    *regs = sched_current_task->regs;
+    page_map_load(sched_current_task->page_map);
+
+    sched_cid++;
+    if (sched_cid == sched_tid) {
+        sched_cid = 0;
+    }
 }
 
 void sched_lock() {

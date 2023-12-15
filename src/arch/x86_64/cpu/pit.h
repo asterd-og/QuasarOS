@@ -6,6 +6,4 @@
 
 #define pit_base_freq 100
 
-extern registers* kernel_ctx;
-
 void pit_init();
