@@ -42,12 +42,7 @@ void syscall_handler(registers* regs) {
         case 0x06:
             // Start new elf task
             sched_create_new_task(quasfs_read((char*)regs->rbx), (char*)regs->rbx, true, true);
-            break;
-        case 0x07:
-            // Get sched tid
-            break;
-        case 0x08:
-            // Get task name
+            //sched_create_new_task(task_test, "test", false, false);
             break;
     }
     sched_unlock();

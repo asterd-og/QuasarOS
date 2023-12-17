@@ -29,6 +29,7 @@ volatile struct limine_hhdm_request hhdm_request = {
 struct flanterm_context *flanterm_context;
 
 u64 HHDM_Offset;
+char* tss_kernel_stack;
 
 static volatile struct limine_module_request modReq = {
     .id = LIMINE_MODULE_REQUEST,
@@ -38,8 +39,6 @@ static volatile struct limine_module_request modReq = {
 struct limine_file* find_module(int pos) {
     return modReq.response->modules[pos];
 }
-
-int i = 0;
 
 void kernel_idle() {
     while (1) {
@@ -57,6 +56,7 @@ void wm_update() {
 }
 
 void _start(void) {
+    asm ("movq %%rsp, %0" : "=r"(tss_kernel_stack) ::); // Load the kernel stack to use as RSP0 in the TSS.
     HHDM_Offset = hhdm_request.response->offset;
 
     gdt_init();
@@ -89,8 +89,9 @@ void _start(void) {
     sched_init();
     pit_init();
 
-
-    for (;;);
+    while(1) {
+        asm ("hlt");
+    }
 }
 
 void putchar_(char c) {

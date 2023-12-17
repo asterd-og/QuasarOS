@@ -76,15 +76,19 @@ void irq_unregister(u8 vec) {
     idt_handlers[vec] = 0;
 }
 
+u64 read_cr2() {
+    u64 ret;
+    asm volatile("mov %%cr2, %0" :"=r"(ret) :: "memory");
+    return ret;
+}
+
 void isr_handler(registers* regs) {
     irq_unregister(0); // Disable tasking
     
     asm volatile("cli");
 
     serial_printf("\nUh oh!\nSomething went wrong: %s\n", idt_msg[regs->int_no]);
-    if (regs->int_no == 14) {
-        serial_printf("Page Map: 0x%lx\n", read_cr3());
-    }
+    serial_printf("RSP: %lx | RIP: %lx | CR3: %lx | CR2: %lx\n", regs->rsp, regs->rip, read_cr3(), read_cr2());
 
     for (;;)asm volatile("hlt");
 }

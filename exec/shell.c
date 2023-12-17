@@ -36,8 +36,13 @@ int main() {
     return 1;
 }
 
-void syscall(int vector, void* arg1, void* arg2) {
-    asm volatile("int $0x30" : : "a"(vector), "b"(arg1), "c"(arg2));
+void syscall(uint64_t vector, void* arg1, void* arg2) {
+    asm volatile (
+        "int $0x30\n\t"
+        : "+a" (vector), "+b" (arg1), "+c" (arg2) // I/O operands
+        : 
+        : "memory" // probably
+    );
 }
 
 void putf(const char* str, void* val) {

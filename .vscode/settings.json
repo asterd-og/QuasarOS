@@ -21,6 +21,7 @@
         "wm.h": "c",
         "heap.h": "c",
         "psf2.h": "c",
-        "lock.h": "c"
+        "lock.h": "c",
+        "elf.h": "c"
     }
 }

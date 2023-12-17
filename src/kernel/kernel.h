@@ -5,6 +5,7 @@
 
 extern u64 Kernel_End;
 extern u64 HHDM_Offset;
+extern char* tss_kernel_stack;
 
 extern volatile struct limine_framebuffer_request fb_request;
 

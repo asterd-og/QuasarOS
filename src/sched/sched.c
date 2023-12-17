@@ -6,7 +6,7 @@
 #include <initrd/quasfs.h>
 
 sched_task* sched_list[SCHED_MAX_TASK];
-sched_task* sched_current_task = NULL;
+sched_task* sched_current_task;
 u64 sched_tid = 0;
 u64 sched_cid = 0;
 
@@ -19,7 +19,7 @@ void sched_init() {
 
 void sched_wrapper(void* addr) {
     ((void(*)())addr)();
-    sched_list[sched_cid]->state = DEAD;
+    sched_current_task->state = DEAD;
     while (1) {
         asm ("hlt");
         // We halt, so we wait for this task to be killed.
@@ -27,42 +27,45 @@ void sched_wrapper(void* addr) {
 }
 
 void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
-    page_map_load(page_map_kernel);
-
+    sched_lock();
     sched_task* task = (sched_task*)kmalloc(sizeof(sched_task));
 
     task->name = name;
+    //task->page_map = (elf ? page_map_new() : (page_map*)to_higher_half(read_cr3()));
     task->page_map = page_map_new();
-    serial_printf("%s's page map is: 0x%lx\n", name, to_physical(task->page_map));
     task->id = sched_tid;
     task->state = RUNNING;
     task->killable = killable;
-    sched_list[sched_tid] = task;
     
-    sched_tid++;
-
     // Set up registers.
     
-    // TODO: Implement wrapper, to safely exit tasks.
-    task->regs.rip = (elf ? elf_exec(addr, task->page_map) : (u64)addr);
+    task->regs.rip = (u64)sched_wrapper;
+    task->regs.rdi = (elf ? elf_exec(addr, task->page_map) : (u64)addr);
     task->regs.cs = 0x28;
     task->regs.ss = 0x30;
     task->regs.rflags = 0x202; // Ints enabled + necessary bit.
     
     // Create stack
 
-    char* stack = (char*)vmm_alloc(task->page_map, align_up(STACK_SIZE, page_size) / page_size, vmm_flag_present | vmm_flag_write);
+    char* stack = (char*)to_higher_half(pmm_alloc(1));
 
     task->regs.rsp = (u64)(stack + STACK_SIZE); // RSP has to be the stack top.
 
-    serial_printf("Created task '%s'\n", name);
+    serial_printf("Created task '%s' stack at %lx\n", name, task->regs.rsp);
+    sched_list[sched_tid] = task;
+    sched_tid++;
+
+    sched_unlock();
 }
 
 void sched_switch(registers* regs) {
+    sched_lock();
     if (sched_current_task) {
         sched_current_task->regs = *regs;
     }
+
     sched_current_task = sched_list[sched_cid];
+
     *regs = sched_current_task->regs;
     page_map_load(sched_current_task->page_map);
 
@@ -70,6 +73,7 @@ void sched_switch(registers* regs) {
     if (sched_cid == sched_tid) {
         sched_cid = 0;
     }
+    sched_unlock();
 }
 
 void sched_lock() {

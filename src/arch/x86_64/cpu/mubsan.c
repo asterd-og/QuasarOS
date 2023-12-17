@@ -1,6 +1,13 @@
 #include <stdint.h>
 #include <arch/x86_64/cpu/serial.h>
 
+/*
+
+CREDITS: xyve7 on github
+https://github.com/xyve7/mubsan
+
+*/
+
 const char* const mubsan_type_check_kinds[] = {
     "load of",
     "store to",

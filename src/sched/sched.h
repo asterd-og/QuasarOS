@@ -9,8 +9,9 @@
 #define SCHED_MAX_TASK 16
 
 enum {
-    STARTING,
+    WAITING,
     RUNNING,
+    BUSY,
     DEAD
 };
 

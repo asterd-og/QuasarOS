@@ -1,5 +1,11 @@
 #include <exec/elf/elf.h>
 
+/*
+
+Special thanks for: xyve7 (https://github.com/xyve7)
+
+*/
+
 u64 elf_exec(char* addr, page_map* page_map) {
     elf_header* hdr = (elf_header*)addr;
 
@@ -17,8 +23,13 @@ u64 elf_exec(char* addr, page_map* page_map) {
     elf_program_header* phdr = (elf_program_header*)((char*)addr + hdr->phoff);
     for (u64 i = 0; i < hdr->entry_PHCount; i++, phdr++) {
         if (phdr->type == ELF_LOAD) {
-            vmm_alloc_map_pages(page_map, align_up(phdr->mem_size / page_size, page_size), phdr->vaddr, vmm_flag_present | vmm_flag_exec | vmm_flag_write);
-            memcpy((void*)phdr->vaddr, (void*)addr + phdr->offset, phdr->file_size);
+            u64 seg_size = div_round_up(phdr->mem_size, page_size);
+            char* seg = to_higher_half(pmm_alloc(seg_size));
+            memcpy((void*)seg, (void*)addr + phdr->offset, phdr->file_size);
+            if (phdr->file_size < phdr->mem_size) {
+                memset((void*)seg + phdr->file_size, 0, phdr->mem_size - phdr->file_size);
+            }
+            vmm_map(page_map, (uptr)to_physical(seg), phdr->vaddr, vmm_flag_present | vmm_flag_exec | vmm_flag_write);
         }
     }
 

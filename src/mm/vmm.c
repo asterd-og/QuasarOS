@@ -96,31 +96,13 @@ void* vmm_free(page_map* page_map, void* ptr, u64 pages) {
 }
 
 page_map* page_map_new() {
-    page_map* pm = (page_map*)vmm_alloc(page_map_kernel, 1, vmm_flag_present | vmm_flag_write);
+    page_map* pm = (page_map*)to_higher_half(pmm_alloc(1));
     memset(pm, 0, page_size);
 
     // Create a new page map and copy contents of kernel page map to new one
-    for (u64 i = 256; i < 512; i++) {
+    for (usize i = 256; i < 512; i++) {
         pm[i] = page_map_kernel[i];
     }
-
-    u64 start = 0;
-    u64 end = 0;
-
-    for (u64 entry = 0; entry < mmap_data.entry_count; entry++) {
-        start = align_down(mmap_data.entries[entry]->base, page_size);
-        end = align_up(mmap_data.entries[entry]->base + mmap_data.entries[entry]->length, page_size);
-
-        for (u64 i = start; i < end; i += page_size) {
-            vmm_map(pm, i, i, vmm_flag_present | vmm_flag_write);
-            vmm_map(pm, i, (uptr)to_higher_half(i), vmm_flag_present | vmm_flag_write);
-        }
-    }
-
-    for (u64 i = 0; i < align_up(kernel_size, page_size); i += page_size) {
-        vmm_map(pm, phys_base + i, virt_base + i, vmm_flag_present | vmm_flag_write);
-    }
-
     return pm;
 }
 

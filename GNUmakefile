@@ -26,7 +26,7 @@ override DEFAULT_HOST_LIBS :=
 $(eval $(call DEFAULT_VAR,HOST_LIBS,$(DEFAULT_HOST_LIBS)))
 
 .PHONY: all
-all: $(IMAGE_NAME).iso debugRun clean
+all: $(IMAGE_NAME).iso run clean
 
 .PHONY: all-hdd
 all-hdd: $(IMAGE_NAME).hdd
