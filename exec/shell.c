@@ -74,26 +74,11 @@ char* read(char* name) {
     return ret;
 }
 
-void run_elf(char* name) {
+uint64_t run_elf(char* name) {
+    uint64_t pid;
     syscall(6, name, 0);
-}
-
-int sched_get_tid() {
-    int ret;
-    syscall(7, 0, 0);
-    asm("":"=a"(ret)::);
-}
-
-uint64_t sched_get_usage(int tid) {
-    uint64_t ret;
-    syscall(8, tid, 0);
-    asm("":"=a"(ret)::);
-}
-
-char* sched_get_name(int tid) {
-    char* ret;
-    syscall(9, tid, 0);
-    asm("":"=a"(ret)::);
+    asm("":"=a"(pid)::);
+    return pid;
 }
 
 int strlen(const char* pStr) {
@@ -104,6 +89,21 @@ int strlen(const char* pStr) {
     }
     return i;
 }
+
+uint64_t ipc_get(uint64_t pid) {
+    uint64_t signal;
+    syscall(7, pid, 0);
+    asm("":"=a"(signal)::);
+    return signal;
+}
+
+uint64_t ipc_get_ret(uint64_t pid) {
+    uint64_t ret;
+    syscall(8, pid, 0);
+    asm("":"=a"(ret)::);
+    return ret;
+}
+
 
 int strcmp(const char* x, const char* y) {
     if (strlen(x) != strlen(y)) return 1;
@@ -123,12 +123,10 @@ struct commandStruct {
 
 void CmdHelp(void);
 void CmdLs(void);
-void CmdTop(void);
 
 const struct commandStruct commands[] = {
     {"help", &CmdHelp, "Help menu."},
     {"ls", &CmdLs, "Lists the directory."},
-    {"top", &CmdTop, "Lists the running tasks."},
     {"",0,""}
 };
 
@@ -145,7 +143,12 @@ void CmdHandler(char * cmd)
         i++;
     }
     if (read(cmd) != NULL) {
-        run_elf(cmd);
+        uint64_t pid = run_elf(cmd);
+        while (ipc_get(pid) != 0) {
+            // Signal 0 = SIGKILL
+            ; // halt and wait for the program to terminate
+        }
+        putf("Task returned with 0x%lx.\n", ipc_get_ret(pid));
     } else {
         putf("No matching program for '%s'.\n", cmd);
     }
@@ -167,13 +170,5 @@ void CmdHelp() {
         putf("%s - ", commands[i].name);
         putf("%s\n", commands[i].help);
         i++;
-    }
-}
-
-void CmdTop() {
-    for (int i = 0; i < sched_get_tid(); i++) {
-        putf("Task %d ", i);
-        putf("'%s' - Usage: ", sched_get_name(i));
-        putf("%ld%%\n", sched_get_usage(i));
     }
 }

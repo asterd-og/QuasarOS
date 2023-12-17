@@ -4,6 +4,7 @@
 #include <libc/printf.h>
 #include <exec/elf/elf.h>
 #include <initrd/quasfs.h>
+#include <sched/ipc.h>
 
 sched_task* sched_list[SCHED_MAX_TASK];
 sched_task* sched_current_task;
@@ -18,15 +19,16 @@ void sched_init() {
 }
 
 void sched_wrapper(void* addr) {
-    ((void(*)())addr)();
+    u64 ret = ((u64(*)())addr)();
     sched_current_task->state = DEAD;
+    ipc_transmit(SIGKILL, ret);
     while (1) {
         asm ("hlt");
         // We halt, so we wait for this task to be killed.
     }
 }
 
-void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
+u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
     sched_lock();
     sched_task* task = (sched_task*)kmalloc(sizeof(sched_task));
 
@@ -56,6 +58,12 @@ void sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
     sched_tid++;
 
     sched_unlock();
+
+    return sched_tid - 1;
+}
+
+u64 sched_get_pid() {
+    return sched_current_task->id;
 }
 
 void sched_switch(registers* regs) {

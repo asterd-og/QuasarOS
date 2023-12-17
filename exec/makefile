@@ -7,4 +7,4 @@ all:
 	cp shell ../initrd/shell
 
 clean:
-	rm -fdr app app.o
+	rm -fdr *.o shell app

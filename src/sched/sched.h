@@ -26,7 +26,8 @@ typedef struct {
 
 void sched_init();
 
-void sched_create_new_task(void* addr, char* name, bool killable, bool elf);
+u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf);
+u64 sched_get_pid();
 
 void sched_switch(registers* regs);
 

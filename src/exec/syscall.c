@@ -3,6 +3,7 @@
 #include <sched/sched.h>
 #include <drivers/kb.h>
 #include <arch/x86_64/cpu/pit.h>
+#include <sched/ipc.h>
 
 /*
 Syscalls spec:
@@ -40,9 +41,16 @@ void syscall_handler(registers* regs) {
             regs->rax = (u64)quasfs_read((char*)regs->rbx);
             break;
         case 0x06:
-            // Start new elf task
-            sched_create_new_task(quasfs_read((char*)regs->rbx), (char*)regs->rbx, true, true);
-            //sched_create_new_task(task_test, "test", false, false);
+            // Start new elf task, it's PID will be on RAX
+            regs->rax = sched_create_new_task(quasfs_read((char*)regs->rbx), (char*)regs->rbx, true, true);
+            break;
+        case 0x07:
+            // Ipc get (u64 pid)
+            regs->rax = ipc_get(regs->rbx);
+            break;
+        case 0x08:
+            // Ipc get ret (u64 pid)
+            regs->rax = ipc_get_ret(regs->rbx);
             break;
     }
     sched_unlock();

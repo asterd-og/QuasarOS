@@ -3,10 +3,15 @@
 
 int main() {
     puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
-    while (1) {
-        asm ("hlt");
-    }
-    return 0;
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    puts("ELF LOADING! Made by Astrido, in QuasarOS ;)\n");
+    return 0x42;
 }
 
 void syscall(int vector, void* arg1, void* arg2) {
