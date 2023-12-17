@@ -71,7 +71,7 @@ limine:
 .PHONY: kernel
 kernel:
 	$(MAKE) -C src
-	$(MAKE) -C exec
+	$(MAKE) -C initrd
 
 $(IMAGE_NAME).iso: limine kernel
 	rm -rf iso_root
@@ -104,7 +104,7 @@ $(IMAGE_NAME).hdd: limine kernel
 clean:
 	rm -rf iso_root $(IMAGE_NAME).iso $(IMAGE_NAME).hdd
 	$(MAKE) -C src clean
-	$(MAKE) -C exec clean
+	$(MAKE) -C initrd clean
 
 .PHONY: distclean
 distclean: clean

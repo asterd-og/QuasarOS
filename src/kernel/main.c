@@ -29,7 +29,6 @@ volatile struct limine_hhdm_request hhdm_request = {
 struct flanterm_context *flanterm_context;
 
 u64 HHDM_Offset;
-char* tss_kernel_stack;
 
 static volatile struct limine_module_request modReq = {
     .id = LIMINE_MODULE_REQUEST,
@@ -56,7 +55,6 @@ void wm_update() {
 }
 
 void _start(void) {
-    asm ("movq %%rsp, %0" : "=r"(tss_kernel_stack) ::); // Load the kernel stack to use as RSP0 in the TSS.
     HHDM_Offset = hhdm_request.response->offset;
 
     gdt_init();
@@ -67,6 +65,8 @@ void _start(void) {
     pic_remap();
     asm ("sti");
 
+    kb_init();
+
     pmm_init();
     vmm_init();
 
@@ -74,7 +74,6 @@ void _start(void) {
 
     vbe_init();
     syscall_init();
-    kb_init();
 
     flanterm_context = flanterm_fb_simple_init(
         vbe_addr,

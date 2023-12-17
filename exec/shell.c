@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include "quasar.h"
 
 int main() {
     puts("Welcome to Quasar's shell V 0.1!\n");
@@ -36,75 +37,6 @@ int main() {
     return 1;
 }
 
-void syscall(uint64_t vector, void* arg1, void* arg2) {
-    asm volatile (
-        "int $0x30\n\t"
-        : "+a" (vector), "+b" (arg1), "+c" (arg2) // I/O operands
-        : 
-        : "memory" // probably
-    );
-}
-
-void putf(const char* str, void* val) {
-    syscall(1, str, val);
-}
-
-void puts(const char* str) {
-    syscall(0, str, 0);
-}
-
-char** dir() {
-    syscall(3, 0, 0);
-    char** ret;
-    asm("":"=a"(ret)::);
-    return ret;
-}
-
-int get_entries() {
-    int ret;
-    syscall(4, 0, 0);
-    asm("":"=a"(ret)::);
-    return ret;
-}
-
-char* read(char* name) {
-    syscall(5, name, 0);
-    char* ret;
-    asm("":"=a"(ret)::);
-    return ret;
-}
-
-uint64_t run_elf(char* name) {
-    uint64_t pid;
-    syscall(6, name, 0);
-    asm("":"=a"(pid)::);
-    return pid;
-}
-
-int strlen(const char* pStr) {
-    int i = 0;
-    while (*pStr != '\0') {
-        i++;
-        pStr++;
-    }
-    return i;
-}
-
-uint64_t ipc_get(uint64_t pid) {
-    uint64_t signal;
-    syscall(7, pid, 0);
-    asm("":"=a"(signal)::);
-    return signal;
-}
-
-uint64_t ipc_get_ret(uint64_t pid) {
-    uint64_t ret;
-    syscall(8, pid, 0);
-    asm("":"=a"(ret)::);
-    return ret;
-}
-
-
 int strcmp(const char* x, const char* y) {
     if (strlen(x) != strlen(y)) return 1;
     for (int i = 0; i < strlen(x); i++) {
@@ -122,11 +54,9 @@ struct commandStruct {
 };
 
 void CmdHelp(void);
-void CmdLs(void);
 
 const struct commandStruct commands[] = {
     {"help", &CmdHelp, "Help menu."},
-    {"ls", &CmdLs, "Lists the directory."},
     {"",0,""}
 };
 
@@ -154,21 +84,6 @@ void CmdHandler(char * cmd)
     }
 }
 
-void CmdLs() {
-    char** dir_ = dir();
-    for (int i = 0; i < get_entries(); i++) {
-        putf("%s ", dir_[i]);
-    }
-    puts("\n");
-}
-
 void CmdHelp() {
     puts("QuasarOS Shell program. Version 0.1. Running inside an ELF file.\n\n");
-    int i = 0;
-    while(commands[i].execute > 0)
-    {
-        putf("%s - ", commands[i].name);
-        putf("%s\n", commands[i].help);
-        i++;
-    }
 }

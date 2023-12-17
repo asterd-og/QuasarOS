@@ -20,8 +20,8 @@ void sched_init() {
 
 void sched_wrapper(void* addr) {
     u64 ret = ((u64(*)())addr)();
-    sched_current_task->state = DEAD;
     ipc_transmit(SIGKILL, ret);
+    sched_current_task->state = DEAD;
     while (1) {
         asm ("hlt");
         // We halt, so we wait for this task to be killed.
@@ -51,7 +51,7 @@ u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
 
     char* stack = (char*)to_higher_half(pmm_alloc(1));
 
-    task->regs.rsp = (u64)(stack + STACK_SIZE); // RSP has to be the stack top.
+    task->regs.rsp = (u64)(stack + page_size); // RSP has to be the stack top.
 
     serial_printf("Created task '%s' stack at %lx\n", name, task->regs.rsp);
     sched_list[sched_tid] = task;
@@ -64,6 +64,27 @@ u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
 
 u64 sched_get_pid() {
     return sched_current_task->id;
+}
+
+void sched_remove_task(u64 id) {
+    sched_lock();
+    
+    page_map_delete(sched_list[id]->page_map);
+    kfree((void*)(sched_list[id]->regs.rsp - page_size));
+    kfree(sched_list[id]);
+
+    // Re-arrange the task list to account for the dead task
+    sched_list[id] = NULL;
+
+    if (id != sched_tid) {
+        for (u64 i = id; i < sched_tid; i++) {
+            sched_list[i] = sched_list[i + 1];
+        }
+    }
+
+    sched_tid--;
+
+    sched_unlock();
 }
 
 void sched_switch(registers* regs) {
@@ -79,6 +100,10 @@ void sched_switch(registers* regs) {
 
     sched_cid++;
     if (sched_cid == sched_tid) {
+        sched_cid = 0;
+    }
+    if (sched_list[sched_cid]->state == DEAD) {
+        sched_remove_task(sched_cid);
         sched_cid = 0;
     }
     sched_unlock();
