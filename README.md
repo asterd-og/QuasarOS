@@ -17,3 +17,6 @@ x86_64 Hobby Operating System
 - [x] Ramdisk
 - [x] Simple IPC signal system
 - [ ] QuasarOS Cross Compiler
+
+# Screenshots
+![sc1](https://github.com/asterd-og/QuasarOS/blob/main/imgs/sc1.png?raw=true)
