@@ -63,6 +63,15 @@ void syscall_handler(registers* regs) {
         case 0x0b:
             // Kfree
             kfree((void*)regs->rbx);
+            break;
+        case 0x0c:
+            // Malloc
+            regs->rax = (u64)malloc(regs->rbx);
+            break;
+        case 0x0d:
+            // Free
+            free((void*)regs->rbx);
+            break;
     }
     sched_unlock();
 }
