@@ -15,5 +15,5 @@ x86_64 Hobby Operating System
 - [x] ELF Loading
 - [x] Syscalls
 - [x] Ramdisk
+- [x] Simple IPC signal system
 - [ ] QuasarOS Cross Compiler
-- [ ] IPC
