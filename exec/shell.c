@@ -120,16 +120,23 @@ void CmdHandler(char * cmd)
 
     if (read(args[0]) != NULL) {
         uint64_t pid = run_elf(args[0], args, ai + 1);
-        while (ipc_get(pid) != 0) {
-            // Signal 0 = SIGKILL
+        while (ipc_get(pid) == 0) {
+            // Signal 0 = nothing
             ; // halt and wait for the program to terminate
         }
-        putf("Task returned with 0x%lx.\n", ipc_get_ret(pid));
+        if (ipc_get(pid) == 2) {
+            // SIGSEGV
+            puts("Segmentation Fault!\n");
+        } else {
+            uint64_t ret = ipc_get_ret(pid);
+            if (ret != 0)
+                putf("Task returned with 0x%lx.\n", ipc_get_ret(pid));
+        }
         ipc_dispatch(pid);
-        kfree(args);
     } else {
         putf("No matching program for '%s'.\n", cmd);
     }
+    kfree(args);
 }
 
 void CmdHelp() {

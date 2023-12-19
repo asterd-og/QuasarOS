@@ -30,6 +30,8 @@ void sched_init();
 
 u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf, char** args, int argc);
 u64 sched_get_pid();
+void sched_kill();
+bool sched_is_dead();
 
 void sched_switch(registers* regs);
 

@@ -57,15 +57,15 @@ int strlen(const char* pStr) {
     return i;
 }
 
-uint64_t ipc_get(uint64_t pid) {
-    uint64_t signal;
+int64_t ipc_get(uint64_t pid) {
+    int64_t signal;
     syscall(7, (void*)pid, 0, 0);
     asm("":"=a"(signal)::);
     return signal;
 }
 
-uint64_t ipc_get_ret(uint64_t pid) {
-    uint64_t ret;
+int64_t ipc_get_ret(uint64_t pid) {
+    int64_t ret;
     syscall(8, (void*)pid, 0, 0);
     asm("":"=a"(ret)::);
     return ret;

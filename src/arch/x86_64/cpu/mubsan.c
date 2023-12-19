@@ -7,7 +7,7 @@ CREDITS: xyve7 on github
 https://github.com/xyve7/mubsan
 
 */
-
+/*
 const char* const mubsan_type_check_kinds[] = {
     "load of",
     "store to",
@@ -185,3 +185,4 @@ void __ubsan_handle_builtin_unreachable(mubsan_unreachable* data) {
                data->loc.col,
                data->loc.file);
 }
+*/

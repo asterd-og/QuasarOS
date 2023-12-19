@@ -20,8 +20,10 @@ void sched_init() {
 
 void sched_wrapper(void* addr) {
     u64 ret = ((u64(*)(int, char**))addr)(sched_current_task->argc, sched_current_task->argv);
-    ipc_transmit(SIGKILL, ret);
-    sched_current_task->state = DEAD;
+    if (sched_current_task->state != DEAD) {
+        ipc_transmit(SIGKILL, ret);
+        sched_current_task->state = DEAD;
+    }
     while (1) {
         asm ("hlt");
         // We halt, so we wait for this task to be killed.
@@ -68,6 +70,14 @@ u64 sched_get_pid() {
     return sched_current_task->id;
 }
 
+void sched_kill() {
+    sched_current_task->state = DEAD;
+}
+
+bool sched_is_dead() {
+    return (sched_current_task->state == DEAD);
+}
+
 void sched_remove_task(u64 id) {
     sched_lock();
     
@@ -92,7 +102,12 @@ void sched_remove_task(u64 id) {
 void sched_switch(registers* regs) {
     sched_lock();
     if (sched_current_task) {
-        sched_current_task->regs = *regs;
+        if (sched_current_task->state == DEAD) {
+            sched_remove_task(sched_current_task->id);
+            sched_cid = 0;
+        } else {
+            sched_current_task->regs = *regs;
+        }
     }
 
     sched_current_task = sched_list[sched_cid];
@@ -102,10 +117,6 @@ void sched_switch(registers* regs) {
 
     sched_cid++;
     if (sched_cid == sched_tid) {
-        sched_cid = 0;
-    }
-    if (sched_list[sched_cid]->state == DEAD) {
-        sched_remove_task(sched_cid);
         sched_cid = 0;
     }
     sched_unlock();

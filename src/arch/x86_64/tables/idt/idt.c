@@ -1,6 +1,8 @@
 #include <arch/x86_64/tables/idt/idt.h>
 #include <arch/x86_64/cpu/serial.h>
 #include <arch/x86_64/cpu/pic.h>
+#include <sched/sched.h>
+#include <sched/ipc.h>
 #include <mm/vmm.h>
 
 __attribute__((aligned(0x10)))
@@ -83,6 +85,19 @@ u64 read_cr2() {
 }
 
 void isr_handler(registers* regs) {
+    sched_lock();
+    if (regs->int_no == 14) {
+        if (read_cr3() != (u64)to_physical(page_map_kernel)) {
+            // Seg fault in an ELF
+            if (!sched_is_dead()) {
+                ipc_transmit(SIGSEGV, 1);
+                sched_kill();
+            }
+            sched_unlock();
+            return;
+        }
+    }
+
     irq_unregister(0); // Disable tasking
     
     asm volatile("cli");
