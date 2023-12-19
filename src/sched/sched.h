@@ -18,6 +18,8 @@ enum {
 typedef struct {
     char* name;
     page_map* page_map;
+    int argc;
+    char** argv;
     registers regs;
     u64 id;
     u8 state;
@@ -26,7 +28,7 @@ typedef struct {
 
 void sched_init();
 
-u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf);
+u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf, char** args, int argc);
 u64 sched_get_pid();
 
 void sched_switch(registers* regs);

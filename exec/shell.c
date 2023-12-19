@@ -2,14 +2,14 @@
 #include <stddef.h>
 #include "quasar.h"
 
-int main() {
+int main(int argc, char** argv) {
     puts("Welcome to Quasar's shell V 0.1!\n");
     char ch = 0;
     char str[512];
     int i = 0;
     puts("> ");
     while (1) {
-        syscall(0x02, 0, 0);
+        syscall(0x02, 0, 0, 0);
         asm ("" : "=a"(ch) ::);
         if (ch != 0) {
             if (ch == '\n') {
@@ -45,6 +45,25 @@ int strcmp(const char* x, const char* y) {
     return 0;
 }
 
+char* strcpy(char* dest, const char* src)
+{
+    if (dest == NULL) {
+        return NULL;
+    }
+ 
+    char *ptr = dest;
+ 
+    while (*src != '\0')
+    {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+ 
+    *dest = '\0';
+ 
+    return ptr;
+}
 
 typedef void(*functionPointerType)(void);
 struct commandStruct {
@@ -72,13 +91,42 @@ void CmdHandler(char * cmd)
         }
         i++;
     }
-    if (read(cmd) != NULL) {
-        uint64_t pid = run_elf(cmd);
+    if (cmd == "") return;
+    char temp[50];
+    char** args = kmalloc(50 * sizeof(char));
+    int ai = 0;
+    int ti = 0;
+    int ci = 0;
+    while (1) {
+        if (cmd[ci] == ' ') {
+            temp[ti] = '\0';
+            args[ai] = kmalloc(strlen(temp) * sizeof(char));
+            strcpy(args[ai], temp);
+            for (int i = 0; i < ti; i++) temp[i] = 0;
+            ti = 0;
+            ai++;
+            ci++;
+        } else if (cmd[ci] == '\0') {
+            temp[ti] = '\0';
+            args[ai] = kmalloc(strlen(temp) * sizeof(char));
+            strcpy(args[ai], temp);
+            break;
+        } else {
+            temp[ti] = cmd[ci];
+            ti++;
+            ci++;
+        }
+    }
+
+    if (read(args[0]) != NULL) {
+        uint64_t pid = run_elf(args[0], args, ai + 1);
         while (ipc_get(pid) != 0) {
             // Signal 0 = SIGKILL
             ; // halt and wait for the program to terminate
         }
         putf("Task returned with 0x%lx.\n", ipc_get_ret(pid));
+        ipc_dispatch(pid);
+        kfree(args);
     } else {
         putf("No matching program for '%s'.\n", cmd);
     }

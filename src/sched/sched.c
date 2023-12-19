@@ -19,7 +19,7 @@ void sched_init() {
 }
 
 void sched_wrapper(void* addr) {
-    u64 ret = ((u64(*)())addr)();
+    u64 ret = ((u64(*)(int, char**))addr)(sched_current_task->argc, sched_current_task->argv);
     ipc_transmit(SIGKILL, ret);
     sched_current_task->state = DEAD;
     while (1) {
@@ -28,12 +28,11 @@ void sched_wrapper(void* addr) {
     }
 }
 
-u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
+u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf, char** args, int argc) {
     sched_lock();
     sched_task* task = (sched_task*)kmalloc(sizeof(sched_task));
 
     task->name = name;
-    //task->page_map = (elf ? page_map_new() : (page_map*)to_higher_half(read_cr3()));
     task->page_map = page_map_new();
     task->id = sched_tid;
     task->state = RUNNING;
@@ -46,7 +45,10 @@ u64 sched_create_new_task(void* addr, char* name, bool killable, bool elf) {
     task->regs.cs = 0x28;
     task->regs.ss = 0x30;
     task->regs.rflags = 0x202; // Ints enabled + necessary bit.
-    
+
+    task->argc = argc;
+    task->argv = args;
+
     // Create stack
 
     char* stack = (char*)to_higher_half(pmm_alloc(1));

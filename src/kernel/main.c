@@ -83,8 +83,8 @@ void _start(void) {
 
     char* shell = quasfs_read("shell");
 
-    sched_create_new_task(kernel_idle, "idle", false, false);
-    sched_create_new_task(shell, "shell", true, true);
+    sched_create_new_task(kernel_idle, "idle", false, false, (char**){0}, 0);
+    sched_create_new_task(shell, "shell", true, true, (char**){0}, 0);
     sched_init();
     pit_init();
 

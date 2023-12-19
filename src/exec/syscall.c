@@ -42,7 +42,7 @@ void syscall_handler(registers* regs) {
             break;
         case 0x06:
             // Start new elf task, it's PID will be on RAX
-            regs->rax = sched_create_new_task(quasfs_read((char*)regs->rbx), (char*)regs->rbx, true, true);
+            regs->rax = sched_create_new_task(quasfs_read((char*)regs->rbx), (char*)regs->rbx, true, true, (char**)regs->rcx, regs->rdx);
             break;
         case 0x07:
             // Ipc get (u64 pid)
@@ -52,6 +52,17 @@ void syscall_handler(registers* regs) {
             // Ipc get ret (u64 pid)
             regs->rax = ipc_get_ret(regs->rbx);
             break;
+        case 0x09:
+            // Ipc dispatch (u64 pid)
+            ipc_dispatch(regs->rbx);
+            break;
+        case 0x0a:
+            // Kmalloc
+            regs->rax = (u64)kmalloc(regs->rbx);
+            break;
+        case 0x0b:
+            // Kfree
+            kfree((void*)regs->rbx);
     }
     sched_unlock();
 }
