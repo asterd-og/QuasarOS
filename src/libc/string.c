@@ -1,4 +1,5 @@
 #include <libc/string.h>
+#include <kernel/kernel.h>
 
 int strlen(const char* pStr) {
     int i = 0;
@@ -36,10 +37,10 @@ char* strcpy(char* dest, const char* src)
  
     return ptr;
 }
+
+
 void *memcpy(void *dest, const void *src, size_t n) {
-
     // Thanks for KM198912 for this function (https://github.com/KM198912)
-
     asm volatile(
         "movq %0, %%rsi\n"
         "movq %1, %%rdi\n"
@@ -49,7 +50,6 @@ void *memcpy(void *dest, const void *src, size_t n) {
         : "r"(src), "r"(dest), "r"(n)
         : "%rsi", "%rdi", "%rcx", "memory"
     );
-
     return dest;
 }
 

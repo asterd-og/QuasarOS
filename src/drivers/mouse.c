@@ -8,6 +8,9 @@ u8 mouse_bytes[3];
 u32 mouse_x = 0;
 u32 mouse_y = 0;
 
+i32 mouse_wrap_x = 0;
+i32 mouse_wrap_y = 0;
+
 bool mouse_left_pressed;
 bool mouse_right_pressed;
 
@@ -32,13 +35,16 @@ u8 mouse_read() {
 }
 
 void mouse_update(i8 accel_x, i8 accel_y) {
-    mouse_x += accel_x;
-    mouse_y -= accel_y;
+    if (mouse_wrap_x + accel_x <= 0) { mouse_wrap_x = 0; return; }
+    if (mouse_wrap_y - accel_y <= 0) { mouse_wrap_y = 0; return; }
+    if (mouse_wrap_x + accel_x > (i32)vbe->width) { mouse_wrap_x = vbe->width; return; }
+    if (mouse_wrap_y - accel_y > (i32)vbe->height) { mouse_wrap_y = vbe->height; return ;}
 
-    if (mouse_x < 0) mouse_x = 0;
-    if (mouse_y < 0) mouse_y = 0;
-    if (mouse_x > vbe->width) mouse_x = vbe->width;
-    if (mouse_y > vbe->height) mouse_y = vbe->height;
+    mouse_wrap_x += accel_x;
+    mouse_wrap_y -= accel_y;
+
+    mouse_x = (u32)mouse_wrap_x;
+    mouse_y = (u32)mouse_wrap_y;
 }
 
 void mouse_handler(registers* regs) {

@@ -14,8 +14,8 @@ static volatile struct limine_memmap_request mmap_request = {
 struct limine_memmap_response mmap_data;
 
 void pmm_init() {
-    u64 higher_address;
-    u64 top_address;
+    u64 higher_address = 0;
+    u64 top_address = 0;
 
     struct limine_memmap_response* pmm_mmap_data = mmap_request.response;
     mmap_data = *pmm_mmap_data;

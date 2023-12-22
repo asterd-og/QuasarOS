@@ -12,13 +12,6 @@ volatile struct limine_rsdp_request rsdp_request = {
 
 madt_cpu_lapic_entry* acpi_lapics[4096];
 
-int acpi_strcmp(const char* x, const char* y, int len) {
-    for (int i = 0; i < len; i++) {
-        if (x[i] != y[i]) return 1;
-    }
-    return 0;
-}
-
 void* acpi_find_madt(void* rsdt_root) {
     acpi_rsdt* rsdt = (acpi_rsdt*)rsdt_root;
     u64 entries = (rsdt->sdt.len - sizeof(rsdt->sdt)) / 4;
@@ -72,7 +65,7 @@ void acpi_init() {
     acpi_rsdp* rsdp = (acpi_rsdp*)rsdp_request.response->address;
     if (rsdp->revision == 0) {
         printf("ACPI Version 1 is used.\n");
-        if (acpi_strcmp(rsdp->signature, "RSD PTR", 7)) {
+        if (memcmp(rsdp->signature, "RSD PTR", 8)) {
             printf("Invalid signature! sig: '%s'\n", rsdp->signature);
             return;
         }

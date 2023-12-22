@@ -16,7 +16,7 @@ framebuffer* fb_create_new(u32 x, u32 y, u32 width, u32 height, u32 pitch) {
 }
 
 void fb_set_pix(framebuffer* fb, u32 x, u32 y, u32 argb) {
-    if (x > fb->width || x < 0 || y > fb->height || y < 0) return;
+    if (x > fb->width || x <= 0 || y > fb->height || y <= 0) return;
     fb->buffer[y * fb->pitch / 4 + x] = argb;
 }
 

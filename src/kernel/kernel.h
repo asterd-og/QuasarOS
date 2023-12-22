@@ -6,6 +6,7 @@
 
 extern u64 Kernel_End;
 extern u64 HHDM_Offset;
+extern bool sse_enabled;
 
 extern volatile struct limine_framebuffer_request fb_request;
 extern struct flanterm_context *flanterm_context;

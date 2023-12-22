@@ -102,12 +102,7 @@ void sched_remove_task(u64 id) {
 void sched_switch(registers* regs) {
     sched_lock();
     if (sched_current_task) {
-        if (sched_current_task->state == DEAD) {
-            sched_remove_task(sched_current_task->id);
-            sched_cid = 0;
-        } else {
-            sched_current_task->regs = *regs;
-        }
+        sched_current_task->regs = *regs;
     }
 
     sched_current_task = sched_list[sched_cid];
@@ -117,6 +112,10 @@ void sched_switch(registers* regs) {
 
     sched_cid++;
     if (sched_cid == sched_tid) {
+        sched_cid = 0;
+    }
+    if (sched_list[sched_cid]->state == DEAD) {
+        sched_remove_task(sched_cid);
         sched_cid = 0;
     }
     sched_unlock();
