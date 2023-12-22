@@ -25,7 +25,7 @@ void sched_wrapper(void* addr) {
         sched_current_task->state = DEAD;
     }
     while (1) {
-        asm ("hlt");
+        __asm__ ("hlt");
         // We halt, so we wait for this task to be killed.
     }
 }

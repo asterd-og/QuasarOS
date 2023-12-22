@@ -52,6 +52,7 @@ override CFLAGS += \
     -fno-stack-check \
     -fno-lto \
     -fPIE \
+    -std=c2x \
     -m64 \
     -march=x86-64 \
     -mno-80387 \

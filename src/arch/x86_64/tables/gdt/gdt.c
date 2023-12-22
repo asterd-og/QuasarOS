@@ -24,5 +24,5 @@ void gdt_init() {
         .offset = (u64)&gdt_table
     };
 
-    asm volatile ("lgdt %0" :: "m"(gdt_data) : "memory");
+    __asm__ volatile ("lgdt %0" :: "m"(gdt_data) : "memory");
 }

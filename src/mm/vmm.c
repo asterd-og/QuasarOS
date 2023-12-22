@@ -19,12 +19,12 @@ uptr virt_base;
 u64 kernel_size;
 
 void write_cr3(u64 val) {
-    asm volatile("mov %0, %%cr3" :: "r"(val) : "memory");
+    __asm__ volatile("mov %0, %%cr3" :: "r"(val) : "memory");
 }
 
 u64 read_cr3() {
     u64 val;
-    asm volatile("mov %%cr3, %0" :"=r"(val) :: "memory");
+    __asm__ volatile("mov %%cr3, %0" :"=r"(val) :: "memory");
     return val;
 }
 
@@ -153,7 +153,7 @@ void vmm_unmap(page_map* page_map, uptr vaddr) {
     }
 
     // Flush page
-    asm volatile("invlpg (%0)" : : "b"(vaddr) : "memory");
+    __asm__ volatile("invlpg (%0)" : : "b"(vaddr) : "memory");
     pml1[pml1_entry] = 0;
 }
 

@@ -41,7 +41,7 @@ char* strcpy(char* dest, const char* src)
 
 void *memcpy(void *dest, const void *src, size_t n) {
     // Thanks for KM198912 for this function (https://github.com/KM198912)
-    asm volatile(
+    __asm__ volatile(
         "movq %0, %%rsi\n"
         "movq %1, %%rdi\n"
         "movq %2, %%rcx\n"

@@ -67,7 +67,7 @@ void idt_init() {
         .offset = (u64)idt_entries
     };
 
-    asm ("lidt %0" :: "m"(idt_data));
+    __asm__ ("lidt %0" :: "m"(idt_data));
 }
 
 void irq_register(u8 vec, void* handler) {
@@ -80,7 +80,7 @@ void irq_unregister(u8 vec) {
 
 u64 read_cr2() {
     u64 ret;
-    asm volatile("mov %%cr2, %0" :"=r"(ret) :: "memory");
+    __asm__ volatile("mov %%cr2, %0" :"=r"(ret) :: "memory");
     return ret;
 }
 
@@ -100,12 +100,12 @@ void isr_handler(registers* regs) {
 
     irq_unregister(0); // Disable tasking
     
-    asm volatile("cli");
+    __asm__ volatile("cli");
 
     serial_printf("\nUh oh!\nSomething went wrong: %s\n", idt_msg[regs->int_no]);
     serial_printf("RSP: %lx | RIP: %lx | CR3: %lx | CR2: %lx\n", regs->rsp, regs->rip, read_cr3(), read_cr2());
 
-    for (;;)asm volatile("hlt");
+    for (;;)__asm__ volatile("hlt");
 }
 
 void irq_handler(registers* regs) {

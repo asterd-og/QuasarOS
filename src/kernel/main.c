@@ -43,7 +43,7 @@ struct limine_file* find_module(int pos) {
 
 void kernel_idle() {
     while (1) {
-        asm ("hlt");
+        __asm__ ("hlt");
     }
 }
 
@@ -55,10 +55,10 @@ void _start(void) {
     gdt_init();
     serial_init();
 
-    asm ("cli");
+    __asm__ ("cli");
     idt_init();
     pic_remap();
-    asm ("sti");
+    __asm__ ("sti");
 
     pmm_init();
     vmm_init();
@@ -75,13 +75,13 @@ void _start(void) {
 
     u64 cr0;
     u64 cr4;
-    asm volatile("mov %%cr0, %0" :"=r"(cr0) :: "memory");
+    __asm__ volatile("mov %%cr0, %0" :"=r"(cr0) :: "memory");
     cr0 &= ~((u64)1 << 2);
     cr0 |= (u64)(1 << 1);
-    asm volatile("mov %0, %%cr0" :: "r"(cr0) : "memory");
-    asm volatile("mov %%cr4, %0" :"=r"(cr4) :: "memory");
+    __asm__ volatile("mov %0, %%cr0" :: "r"(cr0) : "memory");
+    __asm__ volatile("mov %%cr4, %0" :"=r"(cr4) :: "memory");
     cr4 |= (u64)(3 << 9);
-    asm volatile("mov %0, %%cr4" :: "r"(cr4) : "memory");
+    __asm__ volatile("mov %0, %%cr4" :: "r"(cr4) : "memory");
     sse_enabled = true;
 
     syscall_init();
@@ -109,7 +109,7 @@ void _start(void) {
     pit_init();
 
     while(1) {
-        asm ("hlt");
+        __asm__ ("hlt");
     }
 }
 
