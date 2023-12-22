@@ -22,6 +22,10 @@
         "heap.h": "c",
         "psf2.h": "c",
         "lock.h": "c",
-        "elf.h": "c"
+        "elf.h": "c",
+        "quasar.h": "c",
+        "acpi.h": "c",
+        "fb.h": "c",
+        "quasfs.h": "c"
     }
 }

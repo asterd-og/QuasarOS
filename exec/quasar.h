@@ -85,3 +85,41 @@ void* kmalloc(size_t size) {
 void kfree(void* addr) {
     syscall(0x0b, addr, 0, 0);
 }
+
+void* malloc(size_t size) {
+    void* addr;
+    syscall(0x0c, size, 0, 0);
+    asm("":"=a"(addr)::);
+    return addr;
+}
+
+void free(void* addr) {
+    syscall(0x0d, addr, 0, 0);
+}
+
+void term_clear() {
+    syscall(0x0e, 0, 0, 0);
+}
+
+void term_set_fg(uint32_t rgb) {
+    syscall(0x0f, rgb, 0, 0);
+}
+
+void term_set_bg(uint32_t rgb) {
+    syscall(0x10, rgb, 0, 0);
+}
+
+void term_reset_fg() {
+    syscall(0x11, 0, 0, 0);
+}
+
+void term_reset_bg() {
+    syscall(0x12, 0, 0, 0);
+}
+
+size_t ftell(char* name) {
+    size_t size;
+    syscall(0x13, name, 0, 0);
+    asm("":"=a"(size)::);
+    return size;
+}

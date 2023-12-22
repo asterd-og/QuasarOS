@@ -72,6 +72,30 @@ void syscall_handler(registers* regs) {
             // Free
             free((void*)regs->rbx);
             break;
+        case 0x0e:
+            // Clear
+            flanterm_context->clear(flanterm_context, true);
+            break;
+        case 0x0f:
+            // Set fg
+            flanterm_context->set_text_fg_rgb(flanterm_context, regs->rbx);
+            break;
+        case 0x10:
+            // Set bg
+            flanterm_context->set_text_bg_rgb(flanterm_context, regs->rbx);
+            break;
+        case 0x11:
+            // Reset fg
+            flanterm_context->set_text_fg_default(flanterm_context);
+            break;
+        case 0x12:
+            // Reset bg
+            flanterm_context->set_text_bg_default(flanterm_context);
+            break;
+        case 0x13:
+            // Ftell
+            regs->rax = quasfs_ftell((char*)regs->rbx);
+            break;
     }
     sched_unlock();
 }

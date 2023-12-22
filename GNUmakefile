@@ -41,7 +41,7 @@ debugRun: $(IMAGE_NAME).iso
 
 .PHONY: kvmRun
 kvmRun: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -enable-kvm -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio
+	qemu-system-x86_64 -smp 2 -enable-kvm -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio
 
 .PHONY: run-uefi
 run-uefi: ovmf $(IMAGE_NAME).iso
