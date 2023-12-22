@@ -55,12 +55,14 @@ typedef struct {
 } acpi_madt_entry;
 
 typedef struct {
+    acpi_madt_entry un;
     u8 cpu_id;
     u8 apic_id;
     u32 flags;
 } madt_cpu_lapic_entry;
 
 typedef struct {
+    acpi_madt_entry un;
     u8 apic_id;
     u8 resv;
     u32 apic_addr;
@@ -68,6 +70,7 @@ typedef struct {
 } madt_ioapic_entry;
 
 typedef struct {
+    acpi_madt_entry un;
     u16 resv;
     u64 phys_lapic;
 } madt_lapic_addr_entry;

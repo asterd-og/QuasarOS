@@ -9,6 +9,7 @@ void pit_sleep(u64 ms) {
 }
 
 void pit_handler(registers* regs) {
+    pit_tick++;
     sched_switch(regs);
 }
 

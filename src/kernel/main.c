@@ -2,11 +2,13 @@
 #include <limine.h>
 #include <arch/x86_64/tables/gdt/gdt.h>
 #include <arch/x86_64/tables/idt/idt.h>
+#include <arch/x86_64/smp/acpi/acpi.h>
+#include <arch/x86_64/smp/apic/lapic.h>
 #include <arch/x86_64/cpu/serial.h>
-#include <arch/x86_64/acpi/acpi.h>
 #include <flanterm/backends/fb.h>
 #include <arch/x86_64/cpu/pic.h>
 #include <arch/x86_64/cpu/pit.h>
+#include <arch/x86_64/smp/smp.h>
 #include <kernel/kernel.h>
 #include <drivers/mouse.h>
 #include <initrd/quasfs.h>
@@ -26,11 +28,6 @@ volatile struct limine_hhdm_request hhdm_request = {
     .revision = 0
 };
 
-volatile struct limine_smp_request smp_request = {
-    .id = LIMINE_SMP_REQUEST,
-    .revision = 0
-};
-
 struct flanterm_context *flanterm_context;
 
 u64 HHDM_Offset;
@@ -47,15 +44,6 @@ struct limine_file* find_module(int pos) {
 void kernel_idle() {
     while (1) {
         asm ("hlt");
-    }
-}
-
-void wm_update() {
-    while (true) {
-        fb_clear(vbe, 0xFF151515);
-        wm_tick();
-        wm_draw_cursor();
-        vbe_update();
     }
 }
 
@@ -84,8 +72,6 @@ void _start(void) {
     pic_remap();
     asm ("sti");
 
-    kb_init();
-
     pmm_init();
     vmm_init();
 
@@ -93,15 +79,21 @@ void _start(void) {
 
     vbe_init();
     syscall_init();
+    mouse_init();
+    kb_init();
+    wm_init();
+
+    wm_window* terminal = wm_create_new_window("Terminal", 640, 400);
 
     flanterm_context = flanterm_fb_simple_init(
-        vbe_addr,
-        (size_t)vbe->width, (size_t)vbe->height,
-        (size_t)vbe->pitch
+        terminal->fb->buffer,
+        (size_t)terminal->fb->width, (size_t)terminal->fb->height,
+        (size_t)terminal->fb->pitch
     );
 
-    printf("CPU Cores: %ld.\n", smp_request.response->cpu_count);
     acpi_init();
+    lapic_init();
+    smp_init_all();
 
     char* shell = quasfs_read("shell");
 

@@ -6,4 +6,6 @@
 
 #define pit_base_freq 100
 
+extern u64 pit_tick;
+
 void pit_init();

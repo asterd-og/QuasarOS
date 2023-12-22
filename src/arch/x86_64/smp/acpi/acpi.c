@@ -1,12 +1,6 @@
-#include <arch/x86_64/acpi/acpi.h>
+#include <arch/x86_64/smp/acpi/acpi.h>
 #include <libc/printf.h>
 #include <mm/pmm.h>
-
-#define MAX(A, B) ({ \
-    __auto_type MAX_a = A; \
-    __auto_type MAX_b = B; \
-    MAX_a > MAX_b ? MAX_a : MAX_b; \
-})
 
 // Note: We only check for version 1 (RSDP/RSDT) for now
 // Later I can implement XSDP/XSDT
@@ -15,6 +9,8 @@ volatile struct limine_rsdp_request rsdp_request = {
     .id = LIMINE_RSDP_REQUEST,
     .revision = 0
 };
+
+madt_cpu_lapic_entry* acpi_lapics[4096];
 
 int acpi_strcmp(const char* x, const char* y, int len) {
     for (int i = 0; i < len; i++) {
@@ -57,6 +53,7 @@ void acpi_madt_parse(void* madt_addr) {
         switch (madt_entry->type) {
             case 0:
                 printf("Found CPU %d.\n", cpu_count);
+                acpi_lapics[cpu_count] = (madt_cpu_lapic_entry*)madt_entry; 
                 cpu_count++;
                 break;
             case 1:
