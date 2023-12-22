@@ -21,7 +21,8 @@ void vbe_init() {
 
 void vbe_update() {
     sched_lock();
-    for (u32 i = 0; i < vbe->width * vbe->height; i++)
-        vbe_addr[i] = vbe->buffer[i];
+    memcpy(vbe_addr, vbe->buffer, vbe->width * vbe->height * 4);
+    /*for (u32 i = 0; i < vbe->width * vbe->height; i++)
+        vbe_addr[i] = vbe->buffer[i];*/
     sched_unlock();
 }

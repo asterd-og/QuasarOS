@@ -60,11 +60,7 @@ void smp_init_core() {
 void smp_init_all() {
     struct limine_smp_response* smp_response = smp_request.response;
     printf("CPU count: %ld.\n", smp_response->cpu_count);
-    for (u64 i = 0; i < smp_response->cpu_count; i++) {
-        if (i != 0) {
-            // CPU 0 is initialised already
-            printf("Initialising CPU %ld.\n", i);
-            smp_response->cpus[i]->goto_address = smp_init_core;
-        }
+    if (smp_response->cpu_count > 1) {
+        smp_response->cpus[1]->goto_address = smp_init_core;
     }
 }
