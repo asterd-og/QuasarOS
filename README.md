@@ -16,6 +16,9 @@ x86_64 Hobby Operating System
 - [x] Syscalls
 - [x] Ramdisk
 - [x] Simple IPC signal system
+- [x] APIC
+- [x] LAPIC
+- [x] SMP
 - [ ] QuasarOS Cross Compiler
 
 # Screenshots
