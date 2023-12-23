@@ -1,4 +1,5 @@
 #include <heap/heap.h>
+#include <libc/panic.h>
 
 /*
 

@@ -95,3 +95,10 @@ wm_window* wm_create_new_window(char* title, u32 width, u32 height) {
 
     return window;
 }
+
+void wm_panic_destroy() {
+    for (int i = 0; i < wm_id; i++) {
+        kfree(wm_window_list[wm_id]);
+    }
+    wm_id = 0;
+}

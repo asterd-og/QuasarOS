@@ -19,3 +19,4 @@ void wm_init();
 void wm_draw_cursor();
 wm_window* wm_create_new_window(char* title, u32 width, u32 height);
 void wm_tick(); // This should be started up on tasking.
+void wm_panic_destroy();

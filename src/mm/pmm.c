@@ -1,4 +1,5 @@
 #include <mm/pmm.h>
+#include <libc/panic.h>
 
 u8* pmm_bitmap;
 u64 pmm_bitmap_size;
@@ -61,7 +62,7 @@ void* pmm_alloc(u64 pages) {
 
     for (;pmm_bitmap_index < pmm_pages; pmm_bitmap_index++) {
         if (pmm_bitmap_index > pmm_pages) {
-            serial_printf("pmm_alloc: Out of memory.\n");
+            panic("pmm_alloc: Out of memory.\n");
             return (void*)-1;
         } else if (pages_free == pages) {
             break;

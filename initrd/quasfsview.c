@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
                 exit(1);
             }
             printf("%s\n", header->name);
-            printf("- %s\n", buffer + header->address);
+            //printf("- %s\n", buffer + header->address);
         }
     }
 

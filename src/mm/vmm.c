@@ -1,5 +1,6 @@
 #include <mm/vmm.h>
 #include <sched/sched.h>
+#include <libc/panic.h>
 
 static volatile struct limine_kernel_address_request kernel_address_request = {
     .id = LIMINE_KERNEL_ADDRESS_REQUEST,
@@ -96,7 +97,8 @@ void* vmm_free(page_map* page_map, void* ptr, u64 pages) {
 }
 
 page_map* page_map_new() {
-    page_map* pm = (page_map*)to_higher_half(pmm_alloc(1));
+    uptr addr = (uptr)pmm_alloc(1);
+    page_map* pm = (page_map*)to_higher_half(addr);
     memset(pm, 0, page_size);
 
     // Create a new page map and copy contents of kernel page map to new one

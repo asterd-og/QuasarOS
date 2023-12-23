@@ -102,6 +102,9 @@ void _start(void) {
     smp_init_all();
 
     char* shell = quasfs_read("shell");
+    if (shell == NULL) {
+        printf("Couldn't open shell.\n");
+    }
 
     sched_create_new_task(kernel_idle, "idle", false, false, (char**){0}, 0);
     sched_create_new_task(shell, "shell", true, true, (char**){0}, 0);
