@@ -1,4 +1,5 @@
 #include "quasar.h"
+#include <stdio.h>
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -6,8 +7,14 @@ int main(int argc, char** argv) {
         return 1;
     }
     
-    char* buf = read(argv[1]);
+    char* buf = kmalloc(ftell(argv[1]));
     size_t size = ftell(argv[1]);
+    int ret = file_read(argv[1], buf);
+    if (ret == 1) {
+        putf("Couldn't find file '%s'!\n", argv[1]);
+        kfree(buf);
+        return 1;
+    }
 
     puts("00000000: ");
 
@@ -37,6 +44,7 @@ int main(int argc, char** argv) {
         }
     }
     puts("\n");
+    kfree(buf);
 
     return 0;
 }

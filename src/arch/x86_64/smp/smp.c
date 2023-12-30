@@ -47,17 +47,18 @@ void smp_init_core() {
 
     printf("New CPU Online!\n");
 
-    char buff[20];
+    //char buff[20];
 
     for (;;) {
         // CPU instructions here
         // FB as test :B
+        /*
         fb_clear(vbe, 0xFF151515);
         wm_tick();
         wm_draw_cursor();
         sprintf(buff, "%d", calc_fps());
         fb_draw_string(vbe, font, buff, 0, 0, 0xFFFFFFFF);
-        vbe_update();
+        vbe_update();*/
     }
 }
 

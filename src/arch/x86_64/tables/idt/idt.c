@@ -90,6 +90,7 @@ void isr_handler(registers* regs) {
         if (read_cr3() != (u64)to_physical(page_map_kernel)) {
             // Seg fault in an ELF
             if (!sched_is_dead()) {
+                serial_printf("Segmentation fault!\n");
                 ipc_transmit(SIGSEGV, 1);
                 sched_kill();
             }

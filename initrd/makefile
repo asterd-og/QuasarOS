@@ -4,7 +4,7 @@ all: compile
 	./quasfs hello.txt kfont.psf file1.txt $(filter-out quasfs quasfsview,$(ELFFILES))
 
 compile:
-	$(MAKE) -C ../exec
+	$(MAKE) -C ../exec/src
 	gcc quasfs.c -o quasfs
 
 view:
@@ -13,4 +13,4 @@ view:
 
 clean:
 	rm -fdr quasfsview quasfs quasfs.fs $(ELFFILES)
-	$(MAKE) -C ../exec clean
+	$(MAKE) -C ../exec/src clean

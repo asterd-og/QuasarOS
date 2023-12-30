@@ -37,3 +37,5 @@ void vmm_unmap(page_map* page_map, uptr vaddr);
 page_map* page_map_new();
 void page_map_delete(page_map* page_map);
 void page_map_load(page_map* page_map);
+
+void mmap(void* vaddr, size_t len, uptr flags, bool shared);

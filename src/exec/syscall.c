@@ -4,6 +4,8 @@
 #include <drivers/kb.h>
 #include <arch/x86_64/cpu/pit.h>
 #include <sched/ipc.h>
+#include <drivers/rtc.h>
+#include <fs/file.h>
 
 /*
 Syscalls spec:
@@ -11,6 +13,8 @@ Syscalls spec:
     rbx - first arg
     rcx - second arg
     rdx - third arg
+    rsi - fourth arg
+    rdi - fifth arg
 */
 
 void syscall_handler(registers* regs) {
@@ -38,7 +42,7 @@ void syscall_handler(registers* regs) {
             break;
         case 0x05:
             // Read file
-            regs->rax = (u64)quasfs_read((char*)regs->rbx);
+            regs->rax = (u64)file_read((char*)regs->rbx, (char*)regs->rcx);
             break;
         case 0x06:
             // Start new elf task, it's PID will be on RAX
@@ -95,6 +99,10 @@ void syscall_handler(registers* regs) {
         case 0x13:
             // Ftell
             regs->rax = quasfs_ftell((char*)regs->rbx);
+            break;
+        case 0x14:
+            // Sleep
+            rtc_sleep(regs->rbx);
             break;
     }
     sched_unlock();

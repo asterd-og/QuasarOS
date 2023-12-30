@@ -60,6 +60,8 @@ void _start(void) {
     pic_remap();
     __asm__ ("sti");
 
+    kb_init();
+
     pmm_init();
     vmm_init();
 
@@ -85,16 +87,11 @@ void _start(void) {
     sse_enabled = true;
 
     syscall_init();
-    mouse_init();
-    kb_init();
-    wm_init();
-
-    wm_window* terminal = wm_create_new_window("Terminal", 640, 400);
 
     flanterm_context = flanterm_fb_simple_init(
-        terminal->fb->buffer,
-        (size_t)terminal->fb->width, (size_t)terminal->fb->height,
-        (size_t)terminal->fb->pitch
+        vbe_addr,
+        (size_t)vbe->width, (size_t)vbe->height,
+        (size_t)vbe->pitch
     );
 
     acpi_init();

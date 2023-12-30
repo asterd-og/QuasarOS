@@ -26,6 +26,8 @@
         "quasar.h": "c",
         "acpi.h": "c",
         "fb.h": "c",
-        "quasfs.h": "c"
+        "quasfs.h": "c",
+        "stdarg.h": "c",
+        "ipc.h": "c"
     }
 }

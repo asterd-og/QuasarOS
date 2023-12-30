@@ -80,10 +80,10 @@ void* vmm_alloc(page_map* page_map, u64 pages, uptr flags) {
     for (u64 i = 0; i < pages; i++) {
         virt = addr + (i * page_size);
         phys = addr + (i * page_size);
-        vmm_map(page_map, phys, (uptr)to_higher_half(virt), flags);
+        vmm_map(page_map, phys, (uptr)virt, flags);
     }
 
-    return (void*)to_higher_half(addr);
+    return (void*)addr;
 }
 
 void* vmm_free(page_map* page_map, void* ptr, u64 pages) {
@@ -157,6 +157,12 @@ void vmm_unmap(page_map* page_map, uptr vaddr) {
     // Flush page
     __asm__ volatile("invlpg (%0)" : : "b"(vaddr) : "memory");
     pml1[pml1_entry] = 0;
+}
+
+void mmap(void* vaddr, size_t len, uptr flags, bool shared) {
+    for (u64 i = 0; i < (u64)align_up(len, page_size); i += page_size) {
+        vmm_map((shared ? page_map_kernel : vmm_current_page_map), (uptr)i + (uptr)vaddr, (shared ? (uptr)to_higher_half(i + vaddr) : (uptr)i + (uptr)vaddr), flags);
+    }
 }
 
 void page_map_load(page_map* page_map) {

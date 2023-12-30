@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #include "quasar.h"
 
 int main(int argc, char** argv) {
@@ -37,33 +39,6 @@ int main(int argc, char** argv) {
     return 1;
 }
 
-int strcmp(const char* x, const char* y) {
-    if (strlen(x) != strlen(y)) return 1;
-    for (int i = 0; i < strlen(x); i++) {
-        if (x[i] != y[i]) return 1;
-    }
-    return 0;
-}
-
-char* strcpy(char* dest, const char* src)
-{
-    if (dest == NULL) {
-        return NULL;
-    }
- 
-    char *ptr = dest;
- 
-    while (*src != '\0')
-    {
-        *dest = *src;
-        dest++;
-        src++;
-    }
- 
-    *dest = '\0';
- 
-    return ptr;
-}
 
 typedef void(*functionPointerType)(void);
 struct commandStruct {
@@ -118,7 +93,10 @@ void CmdHandler(char * cmd)
         }
     }
 
-    if (read(args[0]) != NULL) {
+    char* buf = (char*)kmalloc(ftell(args[0]));
+    int ret = file_read(args[0], buf);
+
+    if (ret != 1) {
         uint64_t pid = run_elf(args[0], args, ai + 1);
         while (ipc_get(pid) == 0) {
             // Signal 0 = nothing
@@ -136,6 +114,7 @@ void CmdHandler(char * cmd)
     } else {
         putf("No matching program for '%s'.\n", cmd);
     }
+    kfree(buf);
     kfree(args);
 }
 

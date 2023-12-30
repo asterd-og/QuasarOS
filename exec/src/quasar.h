@@ -34,27 +34,11 @@ int get_entries() {
     return ret;
 }
 
-char* read(char* name) {
-    syscall(5, name, 0, 0);
-    char* ret;
-    asm("":"=a"(ret)::);
-    return ret;
-}
-
 uint64_t run_elf(char* name, char** args, int argc) {
     uint64_t pid;
     syscall(6, name, args, argc);
     asm("":"=a"(pid)::);
     return pid;
-}
-
-int strlen(const char* pStr) {
-    int i = 0;
-    while (*pStr != '\0') {
-        i++;
-        pStr++;
-    }
-    return i;
 }
 
 int64_t ipc_get(uint64_t pid) {
@@ -122,4 +106,8 @@ size_t ftell(char* name) {
     syscall(0x13, name, 0, 0);
     asm("":"=a"(size)::);
     return size;
+}
+
+void sleep(uint64_t seconds) {
+    syscall(0x14, seconds, 0, 0);
 }

@@ -8,4 +8,5 @@
 
 extern u64 pit_tick;
 
+void pit_sleep(u64 ms);
 void pit_init();
